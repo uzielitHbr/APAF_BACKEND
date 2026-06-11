@@ -1,4 +1,7 @@
 package app.apaf.backend.features.auth.login.input;
 
-public record LoginCommand() {
+public record LoginCommand(
+        String email,
+        String password
+) {
 }
