@@ -62,7 +62,7 @@ public class UserDetailsImpl implements UserDetails {
         if (user.getLockTime() == null) {
             return true;
         }
-        return now().isAfter(user.getLockTime().plusMinutes(3));
+        return now().isAfter(user.getLockTime().plusMinutes(1));
     }
 
     @Override

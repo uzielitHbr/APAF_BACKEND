@@ -10,6 +10,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
 
 import java.time.LocalDateTime;
@@ -49,6 +50,7 @@ public class User {
     @Column(name = "tiempo_bloqueado")
     private LocalDateTime lockTime;
 
+    @CreationTimestamp
     @Column(name = "fecha_creacion")
     private LocalDateTime creationDay;
 

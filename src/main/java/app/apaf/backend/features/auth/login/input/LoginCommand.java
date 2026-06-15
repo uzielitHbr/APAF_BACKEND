@@ -12,7 +12,7 @@ public record LoginCommand(
         String email,
 
         @NotBlank(message = "La contraseña es obligatoria")
-        @Size(min = 8, max = 64, message = "La contraseña no puede establcerse con esos caracteres")
+        @Size(min = 8, max = 64, message = "La contraseña es demasiado corta o extensa")
         String password
 ) {
 }

@@ -77,6 +77,11 @@ public class LoginHandler {
         User user = userRepository.findByEmail(mail).orElse(null);
         if (user != null) {
 
+
+            if (user.getLockTime() != null && now().isAfter(user.getLockTime().plusMinutes(3))) {
+                user.setFailedAttempts(0);
+                user.setLockTime(null);
+            }
             int attemps = user.getFailedAttempts() == null ? 0 : user.getFailedAttempts();
             user.setFailedAttempts(attemps + 1);
             if (user.getFailedAttempts() >= 5) {
