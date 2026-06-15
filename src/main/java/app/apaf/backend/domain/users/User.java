@@ -1,6 +1,7 @@
 package app.apaf.backend.domain.users;
 
 
+import app.apaf.backend.domain.enums.UserStatus;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -9,7 +10,6 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.security.core.userdetails.UserDetails;
 
 
 import java.time.LocalDateTime;
@@ -25,31 +25,46 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_usuario")
-    private Long idUsuario;
+    private Long idUser;
 
     @Column(name = "nombre_completo", nullable = false, length = 150)
-    private String nombreCompleto;
+    private String fullName;
 
     @Column(name = "correo", nullable = false, unique = true, length = 100)
-    private String correo;
+    private String email;
 
-    @Column(name = "password", length = 255)
+    @Column(name = "contrasenia", length = 255)
     private String password;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "estado", nullable = false, length = 20)
-    private String estado;
+    private UserStatus status;
+
+    @Column(name = "intentos_fallidos")
+    private Integer failedAttempts =0;
+
+    @Column (name = "cuenta_bloqueada")
+    private boolean accountLocked =false;
+
+    @Column(name = "tiempo_bloqueado")
+    private LocalDateTime lockTime;
 
     @Column(name = "fecha_creacion")
-    private LocalDateTime fechaCreacion;
+    private LocalDateTime creationDay;
+
 
     @Column(name = "fecha_baja")
-    private LocalDateTime fechaBaja;
+    private LocalDateTime deactivationDate;
 
     @Column(name = "token_recuperacion")
-    private String tokenRecuperacion;
+    private String recoveryToken;
 
     @Column(name = "expiracion_token")
-    private LocalDateTime expiracionToken;
+    private LocalDateTime expirationToken;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "creado_por")
+    private User createdBy;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -57,6 +72,6 @@ public class User {
             joinColumns = @JoinColumn(name = "id_usuario"),
             inverseJoinColumns = @JoinColumn(name = "id_permiso")
     )
-    private List<Permission> permisos;
+    private List<Permission> permissions;
 }
 

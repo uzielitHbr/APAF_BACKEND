@@ -1,14 +1,17 @@
 package app.apaf.backend.core.security.impl;
 
 
+import app.apaf.backend.domain.enums.UserStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import app.apaf.backend.domain.users.User;
 
 import java.util.Collection;
-import java.util.List;
+
+import static java.time.LocalDateTime.now;
 
 
 /*
@@ -28,8 +31,11 @@ public class UserDetailsImpl implements UserDetails {
     }
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
-        // return List.of(new SimpleGrantedAuthority(user.getPermisoOPerfil()));
+        return user.getPermissions().stream()
+                .map(permission ->
+                        new SimpleGrantedAuthority(permission.getCodePermission()))
+                .toList();
+
     }
 
     @Override
@@ -39,7 +45,7 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public String getUsername() {
-        return user.getCorreo();
+        return user.getEmail();
     }
 
     @Override
@@ -49,7 +55,14 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return UserDetails.super.isAccountNonLocked();
+
+        if (user.isAccountLocked()) {
+            return false;
+        }
+        if (user.getLockTime() == null) {
+            return true;
+        }
+        return now().isAfter(user.getLockTime().plusMinutes(3));
     }
 
     @Override
@@ -59,6 +72,6 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return UserDetails.super.isEnabled();
+        return UserStatus.ACTIVO.equals(user.getStatus());
     }
 }

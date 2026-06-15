@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
+import java.util.List;
 
 
 /*
@@ -51,9 +52,10 @@ public class JwtService {
     }
 
     // Generate token , I used a IdUsuario is more secure
-    public String generateJwtToken(Long idUsuario) {
+    public String generateJwtToken(Long idUsuario, List<String> permisos) {
         return Jwts.builder()
                 .subject(String.valueOf(idUsuario))
+                .claim("permisos", permisos)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expirationTime))
                 .signWith(secretKey())
