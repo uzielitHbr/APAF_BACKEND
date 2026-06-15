@@ -17,8 +17,9 @@ import lombok.NoArgsConstructor;
 public class Permission {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long idPermiso;
+    @Column(name = "id_permiso")
+    private Long idPermission;
 
     @Column(name = "codigo_permiso", nullable = false, unique = true, length = 50)
-    private String codigoPermiso;
+    private String codePermission;
 }
