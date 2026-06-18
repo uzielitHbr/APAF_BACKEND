@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import app.apaf.backend.domain.users.User;
 
 import java.util.Collection;
+import java.util.List;
 
 import static java.time.LocalDateTime.now;
 
@@ -31,11 +32,7 @@ public class UserDetailsImpl implements UserDetails {
     }
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return user.getPermissions().stream()
-                .map(permission ->
-                        new SimpleGrantedAuthority(permission.getCodePermission()))
-                .toList();
-
+        return List.of(new SimpleGrantedAuthority("ROLE_"+this.user.getRole().name()));
     }
 
     @Override

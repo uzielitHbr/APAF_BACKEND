@@ -1,6 +1,7 @@
 package app.apaf.backend.domain.users;
 
 
+import app.apaf.backend.domain.enums.RoleUser;
 import app.apaf.backend.domain.enums.UserStatus;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -12,9 +13,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
-
 import java.time.LocalDateTime;
-import java.util.List;
+
 
 @Entity
 @Table(name = "usuarios")
@@ -40,6 +40,10 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(name = "estado", nullable = false, length = 20)
     private UserStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "rol", length = 20)
+    private RoleUser role;
 
     @Column(name = "intentos_fallidos")
     private Integer failedAttempts =0;
@@ -68,12 +72,6 @@ public class User {
     @JoinColumn(name = "creado_por")
     private User createdBy;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "usuarios_permisos",
-            joinColumns = @JoinColumn(name = "id_usuario"),
-            inverseJoinColumns = @JoinColumn(name = "id_permiso")
-    )
-    private List<Permission> permissions;
+
 }
 

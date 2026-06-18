@@ -1,6 +1,6 @@
 package app.apaf.backend.domain.enums;
 
-public enum UserPermission {
+public enum RoleUser {
     ADMIN,
     RIESGOS,
     ANALISTA,

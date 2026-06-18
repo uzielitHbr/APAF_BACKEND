@@ -10,16 +10,16 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name="permisos")
+@Table(name="rol")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Permission {
+public class Role {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_permiso")
-    private Long idPermission;
+    @Column(name = "id_rol")
+    private Long idRole;
 
-    @Column(name = "codigo_permiso", nullable = false, unique = true, length = 50)
-    private String codePermission;
+    @Column(name = "codigo_rol", nullable = false, unique = true, length = 50)
+    private String codeRole;
 }
