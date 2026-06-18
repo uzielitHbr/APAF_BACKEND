@@ -1,6 +1,8 @@
 package app.apaf.backend.features.auth.login;
 
 import app.apaf.backend.core.security.JwtService;
+import app.apaf.backend.domain.enums.RoleUser;
+import app.apaf.backend.domain.users.Role;
 import app.apaf.backend.domain.users.User;
 import app.apaf.backend.domain.users.repository.UserRepository;
 import app.apaf.backend.features.auth.login.input.LoginCommand;
@@ -44,7 +46,6 @@ public class LoginHandler {
             if (lockedAccount) {
                 throw new LockedException("Account locked after too many failed attempts.Try again after 3 minutes");
             }
-
             throw new BadCredentialsException("Invalid email or password");
         }
 
@@ -56,19 +57,14 @@ public class LoginHandler {
             user.setLockTime(null);
             userRepository.save(user);
 
-        List<String> permission = user.getPermissions().stream()
-                .map(permissions ->
-                        permissions.getCodePermission())
-                .toList();
-
-        String token = jwtService.generateJwtToken(user.getIdUser(), permission);
+        String token = jwtService.generateJwtToken(user.getIdUser(), user.getRole().name());
 
         return new LoginResult(
                 token,
                 user.getFullName(),
                 user.getStatus(),
                 user.getEmail(),
-                permission
+                user.getRole().name()
         );
     }
 

@@ -52,10 +52,10 @@ public class JwtService {
     }
 
     // Generate token , I used a IdUsuario is more secure
-    public String generateJwtToken(Long idUsuario, List<String> permisos) {
+    public String generateJwtToken(Long idUsuario, String role) {
         return Jwts.builder()
                 .subject(String.valueOf(idUsuario))
-                .claim("permisos", permisos)
+                .claim("role", role)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expirationTime))
                 .signWith(secretKey())
