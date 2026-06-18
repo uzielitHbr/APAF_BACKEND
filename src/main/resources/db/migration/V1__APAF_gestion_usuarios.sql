@@ -10,6 +10,7 @@ id_usuario BIGSERIAL PRIMARY KEY,
 nombre_completo VARCHAR(150) NOT NULL,
 correo VARCHAR(100) NOT NULL UNIQUE,
 contrasenia VARCHAR(255),
+telefono VARCHAR(15) NOT NULL ,
 estado VARCHAR(20) NOT NULL DEFAULT 'PENDIENTE'
                               CHECK (estado IN ('PENDIENTE', 'ACTIVO', 'INACTIVO')),
 rol VARCHAR(30) NOT NULL
