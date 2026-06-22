@@ -19,29 +19,5 @@ public class BackendApplication {
 		SpringApplication.run(BackendApplication.class, args);
 	}
 
-	@Bean
-    CommandLineRunner initSuperAdmin(UserRepository userRepository, PasswordEncoder passwordEncoder) {
-		return args -> {
-			String correoAdmin = "uzielalbertoar@gmail.com";
-
-			if (userRepository.findByEmail(correoAdmin).isEmpty()) {
-
-				User superAdmin = new User();
-				superAdmin.setFullName("Uziel Alberto Abraham Rendon");
-				superAdmin.setEmail(correoAdmin);
-				superAdmin.setPassword(passwordEncoder.encode("123456789"));
-
-				superAdmin.setPhoneNumber("7772549830");
-				superAdmin.setRole(RoleUser.ADMIN);
-				superAdmin.setStatus(UserStatus.ACTIVO);
-
-				userRepository.save(superAdmin);
-
-				System.out.println("✅ Super Administrador creado con éxito en la base de datos.");
-			} else {
-				System.out.println("⚡ El Super Administrador ya existe. Omitiendo creación.");
-			}
-		};
-	}
 
 }
