@@ -56,7 +56,7 @@ public class CreateUserHandler {
 
         String setupToken = UUID.randomUUID().toString();
         user.setVerificationToken(setupToken);
-        user.setExpirationToken(LocalDateTime.now().plusHours(3));
+        user.setExpirationToken(LocalDateTime.now().plusHours(6));
 
         userRepository.save(user);
 

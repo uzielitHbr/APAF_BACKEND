@@ -113,7 +113,7 @@ public class EmailService {
     // Set new password
     @Async
     public void sendPasswordSetup(String email, String token, String nameUser) {
-        String link = "http://localhost:5173/setup-password?token=" + token;
+        String link = "http://localhost:5173/set-password?token=" + token;
 
         String htmlFormat = """
             <!DOCTYPE html>
@@ -174,11 +174,11 @@ public class EmailService {
             helper.setText(htmlFormat, true);
 
             mailSender.send(message);
-            System.out.println("Email de bienvenida enviado exitosamente: " + link);
+            System.out.println("Email send successfully: " + link);
 
         } catch (MessagingException messagingException) {
             System.out.println(messagingException.getMessage());
-            System.out.println("Error enviando correo de bienvenida: " + messagingException.getMessage());
+            System.out.println("Error " + messagingException.getMessage());
         }
     }
 

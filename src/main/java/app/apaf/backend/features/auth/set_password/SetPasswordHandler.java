@@ -14,7 +14,7 @@ import static java.time.LocalTime.now;
 
 /*
 Exclusive service for new users , and status PENDIENTE ,
-admin created with a 24 hours expiration , required token and newPassword
+admin created with a 6 hours expiration , required token and newPassword
  */
 @Service
 @RequiredArgsConstructor
@@ -29,7 +29,7 @@ public class SetPasswordHandler {
     @Transactional
     public String execute(SetPasswordCommand command) {
 
-        User user = userRepository.findByRecoveryToken(command.token())
+        User user = userRepository.findByVerificationToken(command.token())
                 .orElseThrow(() -> new RuntimeException("User not found"));
         if (user.getStatus() != UserStatus.PENDIENTE) {
             throw new RuntimeException("Status error. Contact administrator");

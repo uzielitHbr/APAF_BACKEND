@@ -45,6 +45,7 @@ public class WebSecurityConfig {
                               command
                                       .requestMatchers("/api/auth/**").permitAll()
                                       .requestMatchers("/api/recover-password").permitAll()
+                                      .requestMatchers("/api/set-password").permitAll()
                               .anyRequest().authenticated()
                       )
               .sessionManagement(
