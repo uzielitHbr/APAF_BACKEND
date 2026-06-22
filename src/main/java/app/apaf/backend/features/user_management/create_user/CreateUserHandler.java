@@ -38,13 +38,16 @@ public class CreateUserHandler {
 
         // We extrect id´s admin from JWT
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Long createdBy = Long.parseLong(authentication.getName());
 
-        User createdById = userRepository.getReferenceById(createdBy);
+
+        String createdByMail = authentication.getName();
+
+        User createdByUser = userRepository.findByEmail(createdByMail)
+                .orElseThrow(() -> new RuntimeException("Admin Email Not Found"));
 
         User user = new User();
 
-        user.setCreatedBy(createdById);
+        user.setCreatedBy(createdByUser);
         user.setFullName(createUserCommand.fullName());
         user.setEmail(createUserCommand.email());
         user.setPhoneNumber(createUserCommand.phoneNumber());
