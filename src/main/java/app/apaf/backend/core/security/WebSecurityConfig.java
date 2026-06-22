@@ -42,8 +42,9 @@ public class WebSecurityConfig {
       http
               .authorizeHttpRequests(
                       command ->
-                              command.requestMatchers(
-                              "/api/auth/**").permitAll()
+                              command
+                                      .requestMatchers("/api/auth/**").permitAll()
+                                      .requestMatchers("/api/recover-password").permitAll()
                               .anyRequest().authenticated()
                       )
               .sessionManagement(

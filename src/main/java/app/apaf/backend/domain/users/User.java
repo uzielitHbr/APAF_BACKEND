@@ -37,6 +37,11 @@ public class User {
     @Column(name = "contrasenia", length = 255)
     private String password;
 
+
+    @Column(name = "telefono",length = 15)
+    private String phoneNumber;
+
+
     @Enumerated(EnumType.STRING)
     @Column(name = "estado", nullable = false, length = 20)
     private UserStatus status;
