@@ -12,6 +12,9 @@ import java.util.UUID;
 
 /*
 Generate UUID , send mail , reset attempts
+
+@Uziel Abraham
+@Version 1.0
  */
 
 @Service
@@ -26,13 +29,12 @@ public class RecoverPasswordHandler {
     public String recoverPassword(RecoverPasswordCommand recoverPasswordCommand)
     {
 
-        User user = userRepository.findByEmail(recoverPasswordCommand.email())
-                .orElseThrow(()-> new RuntimeException("User not found"));
-        String recoveryToken = UUID.randomUUID().toString();
-        user.setRecoveryToken(recoveryToken);
-        userRepository.save(user);
-
-        emailService.sendPasswordResetEmail(user.getEmail(), recoveryToken);
+        userRepository.findByEmail(recoverPasswordCommand.email()).ifPresent(user -> {
+            String recoveryToken = UUID.randomUUID().toString();
+            user.setRecoveryToken(recoveryToken);
+            userRepository.save(user);
+            emailService.sendRecoveryPasswordMail(user.getEmail(), recoveryToken);
+        });
         return "Email send successfully . Please follow the instructions";
     }
 

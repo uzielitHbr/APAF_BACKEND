@@ -28,29 +28,57 @@ public class EmailService {
 
     // Recover Password
     @Async
-    public void sendPasswordResetEmail(String email, String token) {
-        String link = "http://localhost:5173/reset-password?token=" + token;
-        String htmlFormat ="""
+    public void sendRecoveryPasswordMail(String email, String token) {
+        String link = "http://localhost:5173/recover-password?token=" + token;
+        //https://firebasestorage.googleapis.com/v0/b/apaf-40cf1.firebasestorage.app/o/APAF_email.png?alt=media&token=a42c05c1-c0d2-4733-925e-c63753796185
+        String htmlFormat = """
             <!DOCTYPE html>
             <html lang="es">
             <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <style>
-                    .boton { background-color: #000000; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;}
-                    .caja { border: 1px solid #eaeaea; padding: 30px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 500px; margin: auto; border-radius: 8px;}
+                    body { background-color: #f4f4f4; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+                    .wrapper { width: 100%%; background-color: #f4f4f4; padding: 20px 15px; box-sizing: border-box; }
+                    .tarjeta { width: 100%%; max-width: 550px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); box-sizing: border-box; }
+                    .cabecera { padding: 30px 30px 10px; border-top: 6px solid #14803c; text-align: left; }
+                    .cuerpo { padding: 20px 30px 40px; color: #333333; }
+                    .pie { text-align: center; padding: 20px; font-size: 12px; color: #999999; }
                 </style>
             </head>
             <body>
-                <div class="caja">
-                    <h2 style="color: #333;">Recuperación de contraseña de APAF</h2>
-                    <p style="color: #555;">Hola, hemos recibido una solicitud para restablecer tu acceso al sistema.</p>
-                    <br>
-                    <a href="%s" class="boton">Cambiar mi contraseña</a>
-                    <br><br>
-                    <p style="color: #888; font-size: 12px;">Si no solicitaste este cambio, puedes ignorar este mensaje de forma segura.</p>
+                <div class="wrapper">
+                    <div class="tarjeta">
+                        <div class="cabecera">
+                            <img src="https://firebasestorage.googleapis.com/v0/b/apaf-40cf1.firebasestorage.app/o/APAF_email.png?alt=media&token=a42c05c1-c0d2-4733-925e-c63753796185" alt="Logo APAF" style="max-width: 500px; width: 100%%; height: auto; display: block;">
+                        </div>
+                        
+                        <div class="cuerpo">
+                            <h2 style="color: #14803c; margin-top: 0; font-size: 22px;">Hola, recibimos tu solicitud:</h2>
+                            <p style="color: #555555; font-size: 16px; line-height: 1.6;">
+                                Se ha solicitado un restablecimiento de contraseña para tu cuenta en el sistema <strong>APAF</strong>. 
+                                Para continuar y crear tu nueva contraseña, por favor haz clic en el siguiente botón:
+                            </p>
+                            
+                            <div style="text-align: center; margin: 35px 0;">
+                                <a href="%s" style="background-color: #14803c; color: #eaffd0; padding: 16px 36px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">Cambiar mi contraseña</a>
+                            </div>
+                            
+                            <p style="color: #888888; font-size: 13px; line-height: 1.5; margin-bottom: 0;">
+                                Si no solicitaste este cambio, no te preocupes. Puedes ignorar este mensaje de forma segura y tu cuenta seguirá protegida.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="pie">
+                        © 2026 APAF - Automatización de procesos para análisis financieros<br>
+                        Este es un correo generado automáticamente.
+                    </div>
                 </div>
             </body>
             </html>
             """.formatted(link);
+
 
         try {
 
@@ -65,7 +93,7 @@ public class EmailService {
 
             mailSender.send(message);
 
-            System.out.println("Email send successfully" + link);
+            System.out.println("Email send successfully" + " "+link);
         } catch (MessagingException messagingException){
             System.out.println(messagingException.getMessage());
 
