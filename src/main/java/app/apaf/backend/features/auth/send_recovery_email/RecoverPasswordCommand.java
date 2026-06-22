@@ -1,4 +1,4 @@
-package app.apaf.backend.features.auth.recoverpassword;
+package app.apaf.backend.features.auth.send_recovery_email;
 
 import jakarta.validation.constraints.Email;
 

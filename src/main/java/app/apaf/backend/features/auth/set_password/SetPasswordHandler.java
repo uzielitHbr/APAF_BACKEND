@@ -1,15 +1,56 @@
 package app.apaf.backend.features.auth.set_password;
 
 
-import org.springframework.scheduling.annotation.Async;
+
+import app.apaf.backend.domain.enums.UserStatus;
+import app.apaf.backend.domain.users.User;
+import app.apaf.backend.domain.users.repository.UserRepository;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import static java.time.LocalTime.now;
+
+/*
+Exclusive service for new users , and status PENDIENTE ,
+admin created with a 24 hours expiration , required token and newPassword
+ */
 @Service
+@RequiredArgsConstructor
 public class SetPasswordHandler {
+
 
     //New User
 
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
+    @Transactional
+    public String execute(SetPasswordCommand command) {
+
+        User user = userRepository.findByRecoveryToken(command.token())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        if (user.getStatus() != UserStatus.PENDIENTE) {
+            throw new RuntimeException("Status error. Contact administrator");
+        }
+
+        if (user.getExpirationToken() != null && now().isAfter(user.getExpirationToken().toLocalTime())) {
+            throw new RuntimeException("Token expired. Contact administrator");
+        }
+
+        user.setPassword(passwordEncoder.encode(command.newPassword()));
+
+        user.setStatus(UserStatus.ACTIVO);
+
+
+        user.setVerificationToken(null);
+        user.setExpirationToken(null);
+
+        userRepository.save(user);
+
+        return "Account activated successfully";
+    }
 
 
 }

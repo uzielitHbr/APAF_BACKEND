@@ -2,6 +2,7 @@ package app.apaf.backend.features.user_management.create_user;
 
 
 
+import app.apaf.backend.domain.email.EmailService;
 import app.apaf.backend.domain.enums.UserStatus;
 import app.apaf.backend.domain.users.User;
 import app.apaf.backend.domain.users.repository.UserRepository;
@@ -11,11 +12,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 
 /*
 This service it will create a user , this option is available only role Admin
 Input FullName, email , phoneNumber , Role
-it will return a http request 200 OK and , it'll send a mail
+it will return an http request 200 OK and , it'll send a mail
 
 @Uziel Abraham
 @Version 1.0
@@ -23,10 +27,11 @@ it will return a http request 200 OK and , it'll send a mail
  */
 @Service
 @AllArgsConstructor
-public class CreateUserHandle {
+public class CreateUserHandler {
 
     private UserRepository userRepository;
 
+    private EmailService emailService;
 
     @Transactional
     public String createUser(CreateUserCommand createUserCommand) {
@@ -43,11 +48,20 @@ public class CreateUserHandle {
         user.setFullName(createUserCommand.fullName());
         user.setEmail(createUserCommand.email());
         user.setPhoneNumber(createUserCommand.phoneNumber());
-        user.setStatus(UserStatus.PENDENTE);
+        user.setStatus(UserStatus.PENDIENTE);
 
         userRepository.save(user);
 
-        //Send mail ( We'll create )
+        //Send mail ( We'll create ) New User
+
+        String setupToken = UUID.randomUUID().toString();
+        user.setVerificationToken(setupToken);
+        user.setExpirationToken(LocalDateTime.now().plusHours(3));
+
+        userRepository.save(user);
+
+
+        emailService.sendPasswordSetup(user.getEmail(), setupToken, user.getFullName());
 
         return "User created successfully";
     }
