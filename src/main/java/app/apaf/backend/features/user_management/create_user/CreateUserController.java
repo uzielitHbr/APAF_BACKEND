@@ -16,6 +16,7 @@ public class CreateUserController {
     @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping
     public ResponseEntity<String> createUser(@Valid @RequestBody CreateUserCommand command) {
+        System.out.println("User created: ");
         String response = createUserHandler.createUser(command);
         return ResponseEntity.ok(response);
     }

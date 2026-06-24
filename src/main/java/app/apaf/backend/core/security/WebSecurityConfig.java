@@ -57,6 +57,8 @@ public class WebSecurityConfig {
               exception ->
                       exception
                       .authenticationEntryPoint((request, response, authException) -> {
+                         System.out.println("Error " + authException.getMessage());
+                         authException.printStackTrace();
                          response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
                       }) )
               .headers(headers->
