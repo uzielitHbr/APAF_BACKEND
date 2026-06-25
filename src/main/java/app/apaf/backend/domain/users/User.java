@@ -68,7 +68,7 @@ public class User {
     private LocalDateTime deactivationDate;
 
     @Column(name = "token_recuperacion")
-    private String recoveryToken;
+    private String verificationToken;
 
     @Column(name = "expiracion_token")
     private LocalDateTime expirationToken;

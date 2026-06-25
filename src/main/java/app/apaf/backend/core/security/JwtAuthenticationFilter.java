@@ -1,6 +1,8 @@
 package app.apaf.backend.core.security;
 
 
+import app.apaf.backend.core.security.impl.UserDetailsImpl;
+import app.apaf.backend.domain.users.User;
 import app.apaf.backend.domain.users.repository.UserRepository;
 import java.io.IOException;
 import jakarta.servlet.FilterChain;
@@ -28,12 +30,12 @@ Filter to intercept and validate Token Jwt in every single request
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
-    private final UserDetailsService userDetailsService;
+    private final UserRepository userRepository;
 
     public JwtAuthenticationFilter(
-           JwtService jwtService, UserDetailsService userDetailsService) {
+           JwtService jwtService, UserRepository userRepository) {
         this.jwtService = jwtService;
-        this.userDetailsService = userDetailsService;
+        this.userRepository= userRepository;
     }
 
 
@@ -53,18 +55,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
                 log.info("Authentication Token: {}", token);
 
-            String idUser = String.valueOf(jwtService.getIdUsuarioFromJwtToken(token));
-             if ( jwtService.validateJwtToken(token)) {
+            String idUser = jwtService.getIdUsuarioFromJwtToken(token);
+            if (jwtService.validateJwtToken(token)) {
 
-                 UserDetails userDetails = userDetailsService.loadUserByUsername(idUser);
-                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                         userDetails, null, userDetails.getAuthorities()
-                 );
-                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                Long id = Long.parseLong(idUser);
+                User user = userRepository.findById(id)
+                        .orElseThrow(() -> new RuntimeException("User not found "));
+                UserDetails userDetails = new UserDetailsImpl(user);
 
-                 SecurityContextHolder.getContext().setAuthentication(authentication);
-             }
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                        userDetails, null, userDetails.getAuthorities()
+                );
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
         }catch (Exception e){
             // If there's an error parsing the token, log it and continue
             log.error("JWT Token parsing failed: {}", e.getMessage());

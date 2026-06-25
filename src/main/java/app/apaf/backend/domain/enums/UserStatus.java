@@ -1,7 +1,7 @@
 package app.apaf.backend.domain.enums;
 
 public enum UserStatus {
-    PENDENTE,
+    PENDIENTE,
     ACTIVO,
     INACTIVO
 }

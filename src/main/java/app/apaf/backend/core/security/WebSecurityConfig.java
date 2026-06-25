@@ -45,6 +45,7 @@ public class WebSecurityConfig {
                               command
                                       .requestMatchers("/api/auth/**").permitAll()
                                       .requestMatchers("/api/recover-password").permitAll()
+                                      .requestMatchers("/api/set-password").permitAll()
                               .anyRequest().authenticated()
                       )
               .sessionManagement(
@@ -56,6 +57,8 @@ public class WebSecurityConfig {
               exception ->
                       exception
                       .authenticationEntryPoint((request, response, authException) -> {
+                         System.out.println("Error " + authException.getMessage());
+                         authException.printStackTrace();
                          response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
                       }) )
               .headers(headers->
