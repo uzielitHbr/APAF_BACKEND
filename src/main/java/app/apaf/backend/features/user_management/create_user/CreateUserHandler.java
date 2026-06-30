@@ -3,7 +3,6 @@ package app.apaf.backend.features.user_management.create_user;
 
 
 import app.apaf.backend.domain.email.EmailService;
-import app.apaf.backend.domain.enums.RoleUser;
 import app.apaf.backend.domain.enums.UserStatus;
 import app.apaf.backend.domain.users.User;
 import app.apaf.backend.domain.users.repository.UserRepository;

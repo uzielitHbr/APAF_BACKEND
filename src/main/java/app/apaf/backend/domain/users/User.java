@@ -1,7 +1,7 @@
 package app.apaf.backend.domain.users;
 
 
-import app.apaf.backend.domain.enums.RoleUser;
+
 import app.apaf.backend.domain.enums.UserStatus;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -46,9 +46,9 @@ public class User {
     @Column(name = "estado", nullable = false, length = 20)
     private UserStatus status;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "rol", length = 20)
-    private RoleUser role;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_rol", nullable = false)
+    private Role role;
 
     @Column(name = "intentos_fallidos")
     private Integer failedAttempts =0;

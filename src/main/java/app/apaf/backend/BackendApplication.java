@@ -1,6 +1,6 @@
 package app.apaf.backend;
 
-import app.apaf.backend.domain.enums.RoleUser;
+
 import app.apaf.backend.domain.enums.UserStatus;
 import app.apaf.backend.domain.users.User;
 import app.apaf.backend.domain.users.repository.UserRepository;
