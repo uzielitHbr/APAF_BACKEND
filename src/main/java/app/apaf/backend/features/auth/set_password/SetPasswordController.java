@@ -13,9 +13,9 @@ public class SetPasswordController {
     private final SetPasswordHandler setPasswordHandler;
 
     @PatchMapping
-    public ResponseEntity<String> setPassword(@Valid @RequestBody SetPasswordCommand command) {
-        String message = setPasswordHandler.execute(command);
-        return ResponseEntity.ok(message);
+    public ResponseEntity<SetPasswordResult> setPassword(@Valid @RequestBody SetPasswordCommand command) {
+        SetPasswordResult result = setPasswordHandler.newPassword(command);
+        return ResponseEntity.ok(result);
     }
 
 }

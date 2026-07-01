@@ -1,7 +1,7 @@
 package app.apaf.backend.features.user_management.create_user;
 
 
-import app.apaf.backend.domain.users.Role;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -19,7 +19,7 @@ public record CreateUserCommand (
         @Pattern(regexp = "^[0-9]+$", message = "Solo se permiten números")
         String phoneNumber ,
         @NotNull(message = "Este campo no puede estar vacio")
-        Role role
+        String role
 
 ){
 }

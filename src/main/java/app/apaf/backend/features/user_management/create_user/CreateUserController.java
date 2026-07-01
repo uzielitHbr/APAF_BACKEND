@@ -13,11 +13,11 @@ import org.springframework.web.bind.annotation.*;
 public class CreateUserController {
     private  final CreateUserHandler createUserHandler;
 
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public ResponseEntity<String> createUser(@Valid @RequestBody CreateUserCommand command) {
-        System.out.println("User created: ");
-        String response = createUserHandler.createUser(command);
+    public ResponseEntity<CreateUserResult> createUser(@Valid @RequestBody CreateUserCommand command) {
+        System.out.println("User created by : ");
+        CreateUserResult response = createUserHandler.createUser(command);
         return ResponseEntity.ok(response);
     }
 
