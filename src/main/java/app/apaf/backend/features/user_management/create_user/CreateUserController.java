@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @CrossOrigin("*")
-@RequestMapping("/api/users/create")
+@RequestMapping("/api/v1/users/create")
 @RequiredArgsConstructor
 public class CreateUserController {
     private  final CreateUserHandler createUserHandler;

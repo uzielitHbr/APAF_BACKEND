@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @CrossOrigin("*")
-@RequestMapping("/api/recover-password")
+@RequestMapping("/api/v1/recover-password")
 @RequiredArgsConstructor
 public class RecoverPasswordController {
 
