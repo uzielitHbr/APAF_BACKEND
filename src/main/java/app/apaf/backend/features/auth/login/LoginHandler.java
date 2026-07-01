@@ -1,8 +1,6 @@
 package app.apaf.backend.features.auth.login;
 
 import app.apaf.backend.core.security.JwtService;
-import app.apaf.backend.domain.enums.RoleUser;
-import app.apaf.backend.domain.users.Role;
 import app.apaf.backend.domain.users.User;
 import app.apaf.backend.domain.users.repository.UserRepository;
 import app.apaf.backend.features.auth.login.input.LoginCommand;
@@ -57,14 +55,14 @@ public class LoginHandler {
             user.setLockTime(null);
             userRepository.save(user);
 
-        String token = jwtService.generateJwtToken(user.getIdUser(), user.getRole().name());
+        String token = jwtService.generateJwtToken(user.getIdUser(), user.getRole().getCodeRole());
 
         return new LoginResult(
                 token,
                 user.getFullName(),
                 user.getStatus(),
                 user.getEmail(),
-                user.getRole().name()
+                user.getRole().getCodeRole()
         );
     }
 

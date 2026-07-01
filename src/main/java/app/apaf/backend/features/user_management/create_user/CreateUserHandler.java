@@ -3,10 +3,11 @@ package app.apaf.backend.features.user_management.create_user;
 
 
 import app.apaf.backend.domain.email.EmailService;
-import app.apaf.backend.domain.enums.RoleUser;
 import app.apaf.backend.domain.enums.UserStatus;
+import app.apaf.backend.domain.users.Role;
 import app.apaf.backend.domain.users.User;
 import app.apaf.backend.domain.users.repository.UserRepository;
+import app.apaf.backend.features.user_management.create_user.repository.RoleRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -31,11 +32,12 @@ it will return an http request 200 OK and , it'll send a mail
 public class CreateUserHandler {
 
     private UserRepository userRepository;
+    private RoleRepository roleRepository;
 
     private EmailService emailService;
 
     @Transactional
-    public String createUser(CreateUserCommand createUserCommand) {
+    public CreateUserResult createUser(CreateUserCommand createUserCommand) {
 
         // We extrect id´s admin from JWT
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -46,16 +48,16 @@ public class CreateUserHandler {
         User createdByUser = userRepository.findByEmail(createdByMail)
                 .orElseThrow(() -> new RuntimeException("Admin Email Not Found"));
 
+        Role rol = roleRepository.findByCodeRole(createUserCommand.role())
+                .orElseThrow(() -> new RuntimeException("Role Not Found"));
         User user = new User();
 
         user.setCreatedBy(createdByUser);
         user.setFullName(createUserCommand.fullName());
         user.setEmail(createUserCommand.email());
         user.setPhoneNumber(createUserCommand.phoneNumber());
-        user.setRole(createUserCommand.role());
+        user.setRole(rol);
         user.setStatus(UserStatus.PENDIENTE);
-
-        userRepository.save(user);
 
         //Send mail ( We'll create ) New User
 
@@ -68,7 +70,7 @@ public class CreateUserHandler {
 
         emailService.sendPasswordSetup(user.getEmail(), setupToken, user.getFullName());
 
-        return "User created successfully";
+        return new CreateUserResult("User created successfully");
     }
 
 

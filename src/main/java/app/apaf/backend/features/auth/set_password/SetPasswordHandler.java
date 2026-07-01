@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+
 import static java.time.LocalTime.now;
 
 /*
@@ -27,7 +29,7 @@ public class SetPasswordHandler {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public String execute(SetPasswordCommand command) {
+    public SetPasswordResult newPassword(SetPasswordCommand command) {
 
         User user = userRepository.findByVerificationToken(command.token())
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -35,7 +37,7 @@ public class SetPasswordHandler {
             throw new RuntimeException("Status error. Contact administrator");
         }
 
-        if (user.getExpirationToken() != null && now().isAfter(user.getExpirationToken().toLocalTime())) {
+        if (user.getExpirationToken() != null && LocalDateTime.now().isAfter(user.getExpirationToken())) {
             throw new RuntimeException("Token expired. Contact administrator");
         }
 
@@ -49,7 +51,7 @@ public class SetPasswordHandler {
 
         userRepository.save(user);
 
-        return "Account activated successfully";
+        return new SetPasswordResult("Account activated successfully");
     }
 
 

@@ -218,10 +218,7 @@ CONSTRAINT chk_fecha_corte_fin_mes
 );
 
 
--- ============================================================
--- 4. TRIGGER PARA ACTUALIZAR fecha_actualizacion
--- ============================================================
-
+-- TRIGGER PARA ACTUALIZAR fecha_actualizacion
 CREATE OR REPLACE FUNCTION fn_actualizar_fecha_actualizacion()
     RETURNS TRIGGER AS $$
 BEGIN
