@@ -4,8 +4,7 @@ package app.apaf.backend.features.auth.send_recovery_email;
 import app.apaf.backend.domain.email.EmailService;
 import app.apaf.backend.domain.enums.UserStatus;
 import app.apaf.backend.domain.users.repository.UserRepository;
-import lombok.AllArgsConstructor;
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,19 +12,24 @@ import java.util.UUID;
 
 import static java.time.LocalDateTime.now;
 
-/*
+/**
 Generate UUID , send mail , reset attempts
 
-This service get email, exclusive ACTIVE users status , and send an email
-with recovery token , the recovery token is valid for 2 hours
-First
+Services recovery password (First part)
+Second part is
+@Link app.apaf.backend.features.auth.reset_password.ResetPasswordHandler
 
-@Uziel Abraham
+@Funtion This service get email, exclusive ACTIVE users status , and send an email
+with recovery token , the recovery token is valid for 2 hours.
+Unlock account if blocked ( many failed attempts ) and send an email with instructions for
+update new password
+
+@Author Uziel Abraham
 @Version 1.0
  */
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class RecoverPasswordHandler {
 
     // Recovery Password

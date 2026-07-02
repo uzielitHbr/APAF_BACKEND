@@ -134,7 +134,7 @@ public class EmailService {
                 <div class="wrapper">
                     <div class="tarjeta">
                         <div class="cabecera">
-                            <img src="https://firebasestorage.googleapis.com/v0/b/apaf-40cf1.firebasestorage.app/o/APAF_email.png?alt=media&token=a42c05c1-c0d2-4733-925e-c63753796185" alt="Logo APAF" style="max-width: 380px; width: 100%%; height: auto; display: block;">
+                            <img src="https://firebasestorage.googleapis.com/v0/b/apaf-40cf1.firebasestorage.app/o/APAF_email.png?alt=media&token=a42c05c1-c0d2-4733-925e-c63753796185" alt="Logo APAF" style="max-width: 500px; width: 100%%; height: auto; display: block;">
                         </div>
                         
                         <div class="cuerpo">
