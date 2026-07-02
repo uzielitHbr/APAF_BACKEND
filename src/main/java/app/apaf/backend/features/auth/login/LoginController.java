@@ -19,15 +19,15 @@ import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 
-@Tag(name = "Login", description = "Este controlador se encarga de dar acceso a los usuarios")
+@Tag(name = "Autenticación y Seguridad", description = "Endpoints públicos para el acceso y recuperación de cuentas")
 public class LoginController {
 
     private final LoginHandler loginHandler;
 
     @PostMapping("/login")
     @Operation(
-            summary = "Otorgar acceso a usuarios",
-            description = "Da acceso a usuarios acorde a su rol (ADMIN, RIESGOS,ANALISTA)"
+            summary = "Iniciar sesión. Generar JWT",
+            description = "Autentica al usuario mediante correo y contraseña. Devuelve el Token JWT necesario para acceder a las rutas protegidas del sistema. Bloquea la cuenta tras 3 intentos fallidos."
     )
     public ResponseEntity<?> login(@Valid  @RequestBody LoginCommand loginCommand) {
         try{

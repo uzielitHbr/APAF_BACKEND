@@ -43,10 +43,11 @@ public class WebSecurityConfig {
               .authorizeHttpRequests(
                       command ->
                               command
-                                      .requestMatchers("/api/v1/auth/**").permitAll()
-                                      .requestMatchers("/api/v1/recover-password").permitAll()
-                                      .requestMatchers("/api/v1/set-password").permitAll()
-                                      .requestMatchers("/api/v1/reset-password").permitAll()
+                                      .requestMatchers("/api/v1/auth/login").permitAll()
+                                      .requestMatchers("/api/v1/auth/recover-password").permitAll()
+                                      .requestMatchers("/api/v1/auth/set-password").permitAll()
+                                      .requestMatchers("/api/v1/auth/reset-password").permitAll()
+
                                       .requestMatchers(
                                               "/v3/api-docs/**",
                                               "/swagger-ui/**",
