@@ -15,10 +15,10 @@ public class RecoverPasswordController {
     private final RecoverPasswordHandler recoverPasswordHandler;
 
     @PostMapping
-    public ResponseEntity<String> recoverPassword(@Valid @RequestBody RecoverPasswordCommand command) {
+    public ResponseEntity<RecoverPasswordResult> recoverPassword(@Valid @RequestBody RecoverPasswordCommand command) {
 
-        String resultMessage = recoverPasswordHandler.recoverPassword(command);
+        RecoverPasswordResult result = recoverPasswordHandler.recoverPassword(command);
 
-        return ResponseEntity.ok(resultMessage);
+        return ResponseEntity.ok(result);
     }
 }

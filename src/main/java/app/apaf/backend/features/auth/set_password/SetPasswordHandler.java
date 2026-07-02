@@ -17,6 +17,9 @@ import static java.time.LocalTime.now;
 /*
 Exclusive service for new users , and status PENDIENTE ,
 admin created with a 6 hours expiration , required token and newPassword
+
+@Uziel Abraham
+@Version 1.0
  */
 @Service
 @RequiredArgsConstructor

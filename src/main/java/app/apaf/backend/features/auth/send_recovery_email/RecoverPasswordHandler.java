@@ -7,6 +7,7 @@ import app.apaf.backend.domain.users.repository.UserRepository;
 import lombok.AllArgsConstructor;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -17,6 +18,7 @@ Generate UUID , send mail , reset attempts
 
 This service get email, exclusive ACTIVE users status , and send an email
 with recovery token , the recovery token is valid for 2 hours
+First
 
 @Uziel Abraham
 @Version 1.0
@@ -31,7 +33,9 @@ public class RecoverPasswordHandler {
     private final UserRepository userRepository;
     private  final EmailService emailService;
 
-    public String recoverPassword(RecoverPasswordCommand recoverPasswordCommand)
+
+    @Transactional
+    public RecoverPasswordResult recoverPassword(RecoverPasswordCommand recoverPasswordCommand)
     {
 
         userRepository.findByEmail(recoverPasswordCommand.email()).ifPresent(user -> {
@@ -40,12 +44,14 @@ public class RecoverPasswordHandler {
                 String recoveryToken = UUID.randomUUID().toString();
                 user.setVerificationToken(recoveryToken);
                 user.setExpirationToken(now().plusHours(2));
+                user.setFailedAttempts(0);
+                user.setAccountLocked(false);
                 userRepository.save(user);
 
                 emailService.sendRecoveryPasswordMail(user.getEmail(), recoveryToken, user.getFullName());
             }
         });
-        return "Email send successfully . Please follow the instructions";
+        return new RecoverPasswordResult("Email send successfully . Please follow the instructions");
     }
 
 }
