@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size;
 
 public record ResetPasswordCommand(
         @NotBlank(message = "Alerta! . El token no puede estar vacio ")
-        String token ,
+        String token,
         @NotNull(message = "Este campo no puede estar vacio")
         @Size(min = 8, message = "La contraseña debe tener al menos 8 caracteres")
         String newPassword

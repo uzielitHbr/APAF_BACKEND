@@ -1,4 +1,4 @@
-package app.apaf.backend.features.auth.set_password;
+package app.apaf.backend.features.auth.set_password_newUsers;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

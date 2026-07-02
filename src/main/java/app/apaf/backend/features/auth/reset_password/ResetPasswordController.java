@@ -1,12 +1,10 @@
 package app.apaf.backend.features.auth.reset_password;
 
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/reset-password")
@@ -18,7 +16,7 @@ public class ResetPasswordController {
 
     @PatchMapping
     public ResponseEntity<ResetPasswordResult> resetPassword(
-            ResetPasswordCommand resetPasswordCommand
+           @Valid @RequestBody ResetPasswordCommand resetPasswordCommand
     ){
         ResetPasswordResult result = resetPasswordHandler.forgotPassword(resetPasswordCommand);
         return ResponseEntity.ok(result);

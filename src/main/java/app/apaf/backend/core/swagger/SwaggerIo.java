@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
         info = @Info (
                 title = "API documentation for Federación Regional de Cooperativa de Ahorro y Prestamo Centro-sur",
                 version = "1.0",
-                description = "Those are the endpoints for APAF"
+                description = "These are the endpoints for APAF"
 
 
         )

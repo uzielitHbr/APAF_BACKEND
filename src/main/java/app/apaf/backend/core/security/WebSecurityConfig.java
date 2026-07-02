@@ -46,6 +46,7 @@ public class WebSecurityConfig {
                                       .requestMatchers("/api/v1/auth/**").permitAll()
                                       .requestMatchers("/api/v1/recover-password").permitAll()
                                       .requestMatchers("/api/v1/set-password").permitAll()
+                                      .requestMatchers("/api/v1/reset-password").permitAll()
                                       .requestMatchers(
                                               "/v3/api-docs/**",
                                               "/swagger-ui/**",
