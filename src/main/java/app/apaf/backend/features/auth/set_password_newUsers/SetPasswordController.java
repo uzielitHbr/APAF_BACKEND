@@ -16,10 +16,10 @@ public class SetPasswordController {
 
     private final SetPasswordHandler setPasswordHandler;
 
-    @PatchMapping("/set-password")
+    @PatchMapping("/setup-password")
     @Operation(
             summary = "Activar cuenta (Nuevos Usuarios)",
-            description = "Recibe el token de invitación enviado por correo y la nueva contraseña. Válido únicamente para cuentas en estado PENDIENTE."
+            description = "Recibe el token de invitación enviado por correo y la nueva contraseña. Válido durate 6 horas y únicamente para cuentas en estado PENDIENTE."
     )
     public ResponseEntity<SetPasswordResult> setPassword(@Valid @RequestBody SetPasswordCommand command) {
         SetPasswordResult result = setPasswordHandler.newPassword(command);

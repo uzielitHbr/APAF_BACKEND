@@ -46,7 +46,7 @@ public class CreateUserHandler {
         String createdByMail = authentication.getName();
 
         User createdByUser = userRepository.findByEmail(createdByMail)
-                .orElseThrow(() -> new RuntimeException("Admin Email Not Found"));
+                .orElseThrow(() -> new RuntimeException("User Not Found"));
 
         Role rol = roleRepository.findByCodeRole(createUserCommand.role())
                 .orElseThrow(() -> new RuntimeException("Role Not Found"));

@@ -32,10 +32,10 @@ public class SetPasswordHandler {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public SetPasswordResult newPassword(SetPasswordCommand command) {
+    public SetPasswordResult newPassword(SetPasswordCommand setPasswordCommand) {
 
-        User user = userRepository.findByVerificationToken(command.token())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findByVerificationToken(setPasswordCommand.token())
+                .orElseThrow(() -> new RuntimeException("Invalid token. Try again!"));
         if (user.getStatus() != UserStatus.PENDIENTE) {
             throw new RuntimeException("Status error. Contact administrator");
         }
@@ -44,7 +44,7 @@ public class SetPasswordHandler {
             throw new RuntimeException("Token expired. Contact administrator");
         }
 
-        user.setPassword(passwordEncoder.encode(command.newPassword()));
+        user.setPassword(passwordEncoder.encode(setPasswordCommand.newPassword()));
 
         user.setStatus(UserStatus.ACTIVO);
 

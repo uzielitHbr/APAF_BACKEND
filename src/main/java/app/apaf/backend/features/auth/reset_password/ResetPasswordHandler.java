@@ -35,7 +35,7 @@ public class ResetPasswordHandler {
     public ResetPasswordResult forgotPassword(ResetPasswordCommand resetPasswordCommand) {
 
         User user = userRepository.findByVerificationToken(resetPasswordCommand.token())
-                .orElseThrow(() -> new RuntimeException("Token invalid"));
+                .orElseThrow(() -> new RuntimeException("Token invalid. Try again!"));
 
         if (user.getStatus() != UserStatus.ACTIVO) {
             throw new RuntimeException("State invalid");
