@@ -14,7 +14,7 @@ import java.util.List;
  * Service responsible for retrieving and filtering the system's user .
   Allows fetching the complete list of registered users or performing
  dynamic filtering based on their account status ({@link UserStatus})
-  @author Uziel Abraham
+  @Author Uziel Abraham
   @version 1.0
  */
 @Service

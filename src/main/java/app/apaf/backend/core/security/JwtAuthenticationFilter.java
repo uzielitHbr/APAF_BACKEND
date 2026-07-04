@@ -19,10 +19,10 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-/*
-Implemente JwtAuthenticationFilter
+/**
+Implement JwtAuthenticationFilter
 Filter to intercept and validate Token Jwt in every single request
-@Uziel Abraham
+@Author Uziel Abraham
 @Version 1.0
  */
 @Component

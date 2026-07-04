@@ -13,8 +13,11 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 
-/*
+/**
 This service it will resend an email invitation excusive if new users get status PENDIENTE
+
+@Author Uziel Abraham
+ @Version 1.0
  */
 @Service
 @RequiredArgsConstructor

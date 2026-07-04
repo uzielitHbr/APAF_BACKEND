@@ -18,12 +18,12 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 
-/*
+/**
 This service it will create a user , this option is available only role Admin
 Input FullName, email , phoneNumber , Role
 it will return an http request 200 OK and , it'll send a mail
 
-@Uziel Abraham
+@Author Uziel Abraham
 @Version 1.0
 
  */

@@ -11,10 +11,10 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
 
-/*
+/**
 This service it'll be attendant create Email format
 and send a link
-@Uziel Abraham
+@Author Uziel Abraham
 @Version 1.0
  */
 @Service

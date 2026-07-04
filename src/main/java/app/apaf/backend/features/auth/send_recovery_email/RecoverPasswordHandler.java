@@ -17,7 +17,7 @@ Generate UUID , send mail , reset attempts
 
 Services recovery password (First part)
 Second part is
-@Link app.apaf.backend.features.auth.reset_password.ResetPasswordHandler
+ @Link ResetPasswordHandler
 
 @Funtion This service get email, exclusive ACTIVE users status , and send an email
 with recovery token , the recovery token is valid for 2 hours.
