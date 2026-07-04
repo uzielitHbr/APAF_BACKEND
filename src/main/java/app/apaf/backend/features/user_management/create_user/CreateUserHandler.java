@@ -7,7 +7,7 @@ import app.apaf.backend.domain.enums.UserStatus;
 import app.apaf.backend.domain.users.Role;
 import app.apaf.backend.domain.users.User;
 import app.apaf.backend.domain.users.repository.UserRepository;
-import app.apaf.backend.features.user_management.create_user.repository.RoleRepository;
+import app.apaf.backend.domain.users.repository.RoleRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;

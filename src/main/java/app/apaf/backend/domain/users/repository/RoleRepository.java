@@ -1,4 +1,4 @@
-package app.apaf.backend.features.user_management.create_user.repository;
+package app.apaf.backend.domain.users.repository;
 
 import app.apaf.backend.domain.users.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
