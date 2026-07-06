@@ -17,10 +17,10 @@ import java.util.Date;
 import java.util.List;
 
 
-/*
+/**
 Clase de Servicio donde se encarga de generar los tokens JWT
 
-@Uziel Abraham
+@Author Uziel Abraham
 @Version 1.0
  */
 

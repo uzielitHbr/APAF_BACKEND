@@ -1,4 +1,4 @@
-package app.apaf.backend.features.auth.set_password;
+package app.apaf.backend.features.auth.set_password_newUsers;
 
 
 
@@ -17,6 +17,9 @@ import static java.time.LocalTime.now;
 /*
 Exclusive service for new users , and status PENDIENTE ,
 admin created with a 6 hours expiration , required token and newPassword
+
+@Uziel Abraham
+@Version 1.0
  */
 @Service
 @RequiredArgsConstructor
@@ -29,10 +32,10 @@ public class SetPasswordHandler {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public SetPasswordResult newPassword(SetPasswordCommand command) {
+    public SetPasswordResult newPassword(SetPasswordCommand setPasswordCommand) {
 
-        User user = userRepository.findByVerificationToken(command.token())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findByVerificationToken(setPasswordCommand.token())
+                .orElseThrow(() -> new RuntimeException("Invalid token. Try again!"));
         if (user.getStatus() != UserStatus.PENDIENTE) {
             throw new RuntimeException("Status error. Contact administrator");
         }
@@ -41,7 +44,7 @@ public class SetPasswordHandler {
             throw new RuntimeException("Token expired. Contact administrator");
         }
 
-        user.setPassword(passwordEncoder.encode(command.newPassword()));
+        user.setPassword(passwordEncoder.encode(setPasswordCommand.newPassword()));
 
         user.setStatus(UserStatus.ACTIVO);
 

@@ -21,11 +21,11 @@ import java.util.Arrays;
 import java.util.List;
 
 
-/*
+/**
 Web security configuration class.
 This class handles all HTTP-level security configurations for the API.
 
-@Uziel Abraham
+@Author Uziel Abraham
 @Version 1.0
  */
 @Configuration
@@ -43,9 +43,16 @@ public class WebSecurityConfig {
               .authorizeHttpRequests(
                       command ->
                               command
-                                      .requestMatchers("/api/auth/**").permitAll()
-                                      .requestMatchers("/api/recover-password").permitAll()
-                                      .requestMatchers("/api/set-password").permitAll()
+                                      .requestMatchers("/api/v1/auth/login").permitAll()
+                                      .requestMatchers("/api/v1/auth/recover-password").permitAll()
+                                      .requestMatchers("/api/v1/auth/setup-password").permitAll()
+                                      .requestMatchers("/api/v1/auth/reset-password").permitAll()
+                                      .requestMatchers("/error").permitAll()
+                                      .requestMatchers(
+                                              "/v3/api-docs/**",
+                                              "/swagger-ui/**",
+                                              "/swagger-ui.html"
+                                      ).permitAll()
                               .anyRequest().authenticated()
                       )
               .sessionManagement(

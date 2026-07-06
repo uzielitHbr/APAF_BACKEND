@@ -7,7 +7,7 @@ import app.apaf.backend.domain.enums.UserStatus;
 import app.apaf.backend.domain.users.Role;
 import app.apaf.backend.domain.users.User;
 import app.apaf.backend.domain.users.repository.UserRepository;
-import app.apaf.backend.features.user_management.create_user.repository.RoleRepository;
+import app.apaf.backend.domain.users.repository.RoleRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,12 +18,12 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 
-/*
+/**
 This service it will create a user , this option is available only role Admin
 Input FullName, email , phoneNumber , Role
 it will return an http request 200 OK and , it'll send a mail
 
-@Uziel Abraham
+@Author Uziel Abraham
 @Version 1.0
 
  */
@@ -46,7 +46,7 @@ public class CreateUserHandler {
         String createdByMail = authentication.getName();
 
         User createdByUser = userRepository.findByEmail(createdByMail)
-                .orElseThrow(() -> new RuntimeException("Admin Email Not Found"));
+                .orElseThrow(() -> new RuntimeException("User Not Found"));
 
         Role rol = roleRepository.findByCodeRole(createUserCommand.role())
                 .orElseThrow(() -> new RuntimeException("Role Not Found"));

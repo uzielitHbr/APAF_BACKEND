@@ -19,12 +19,12 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 
-/*
+/**
 This class is responsible for instantiating the internal security beans required
  for user authentication, such as the UserDetailsService, PasswordEncoder,
  and the AuthenticationManager.
 
- @Uziel Abraham
+ @Author Uziel Abraham
  @Version 1.0
  */
 
