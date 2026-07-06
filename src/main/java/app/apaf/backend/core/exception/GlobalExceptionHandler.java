@@ -120,7 +120,7 @@ public class GlobalExceptionHandler {
         response.put("timestamp", LocalDateTime.now());
         response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
         response.put("error", "Error Interno del Servidor");
-        response.put("message", "Ocurrió un error inesperado en el sistema. Contacte al administrador de APAF.");
+        response.put("message", "Ocurrió un error inesperado en el sistema. Contacte al administrador.");
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
