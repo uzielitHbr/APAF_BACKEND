@@ -1,4 +1,4 @@
-package app.apaf.backend.features.session_management;
+package app.apaf.backend.features.session_management.current_user;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 @CrossOrigin("*")
 @RequestMapping("/api/v1/current-user")
 @RequiredArgsConstructor
-@Tag(name = "Manejo de sesion activa")
+@Tag(name = "Manejo de sesion activa",description = "Uso de los usuarios")
 public class CurrentUserController {
 
     private final CurrentUserQueryHandler currentUserQueryHandler;

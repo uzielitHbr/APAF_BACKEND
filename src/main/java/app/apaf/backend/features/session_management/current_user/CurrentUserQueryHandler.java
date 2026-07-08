@@ -1,4 +1,4 @@
-package app.apaf.backend.features.session_management;
+package app.apaf.backend.features.session_management.current_user;
 
 import app.apaf.backend.domain.users.User;
 import app.apaf.backend.domain.users.repository.UserRepository;
