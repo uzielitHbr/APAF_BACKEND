@@ -4,7 +4,6 @@ package app.apaf.backend.features.user_management.list_users;
 import app.apaf.backend.domain.enums.UserStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Gestión de Usuarios", description = "Operación para los perfiles del sistema (Solo ADMIN)")
 public class ListUsersController {
 
-    private final ListUsersHandler listUsersHandler;
+    private final ListUsersQueryHandler listUsersQueryHandler;
 
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -28,7 +27,7 @@ public class ListUsersController {
             @RequestParam(required = false) UserStatus status
             ) {
 
-        ListUsersResult result = listUsersHandler.getListUsersHandler(status);
+        ListUsersResult result = listUsersQueryHandler.getListUsersHandler(status);
 
         return ResponseEntity.ok(result);
 

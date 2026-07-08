@@ -19,7 +19,7 @@ import java.util.List;
  */
 @Service
 @RequiredArgsConstructor
-public class ListUsersHandler {
+public class ListUsersQueryHandler {
 
     private final UserRepository userRepository;
 
