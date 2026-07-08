@@ -8,7 +8,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+/**
+ * This service update user's password , while user is en their session
+ *
+ * @Author Uziel Abraham
+ * @Version 1.0
+ */
 @Service
 @RequiredArgsConstructor
 public class UpdatePasswordHandler {
@@ -18,7 +23,7 @@ public class UpdatePasswordHandler {
 
 
     @Transactional
-    public UpdatePasswordResult updatePasswordResult(UpdatePasswordCommand updatePasswordCommand) {
+    public UpdatePasswordResult updatePassword(UpdatePasswordCommand updatePasswordCommand) {
 
 
         if (!updatePasswordCommand.newPassword().equals(updatePasswordCommand.confirmNewPassword())) {

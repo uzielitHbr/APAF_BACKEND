@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -26,8 +25,8 @@ public class UpdatePasswordController {
             description = "Permite al usuario cambiar su contraseña."
     )
     public ResponseEntity<UpdatePasswordResult> updatePassword(
-            @Valid @RequestBody UpdatePasswordCommand command
+            @Valid @RequestBody UpdatePasswordCommand updatePasswordCommand
     ) {
-        return ResponseEntity.ok(updatePasswordHandler.updatePasswordResult(command));
+        return ResponseEntity.ok(updatePasswordHandler.updatePassword(updatePasswordCommand));
     }
 }
