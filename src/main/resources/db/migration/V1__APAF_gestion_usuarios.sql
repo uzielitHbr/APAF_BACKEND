@@ -1,4 +1,7 @@
 
+
+
+
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 /*
@@ -49,176 +52,101 @@ CONSTRAINT fk_usuario_creado_por
 );
 
 
-/*
- CARTERA
- Cada fila representa un contrato
- */
-CREATE TABLE cartera_analisis_mensual (
+
+-- Índices para optimizar el login y seguridad
+CREATE INDEX IF NOT EXISTS index_usuarios_id_rol ON usuarios(id_rol);
+CREATE INDEX IF NOT EXISTS index_usuarios_estado ON usuarios(estado);
+
+
+
+
+CREATE TABLE cartera_datos (
 id_analisis_mensual UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
- mes_corte DATE NOT NULL,
+mes_corte DATE NOT NULL,
 fecha_corte DATE NOT NULL,
 
-/*
- Datos
- */
+nombre_acreditado VARCHAR(255),
 numero_socio VARCHAR(50) NOT NULL,
-nombre_acreditado VARCHAR(255) NOT NULL,
-genero VARCHAR(50),
-fecha_nacimiento DATE,
-edad INT,
-ocupacion VARCHAR(150),
-localidad VARCHAR(150),
-
-
-municipio VARCHAR(150),
-estado VARCHAR(100),
-
-/*
- Credito
- */
-no_contrato VARCHAR(50) NOT NULL,
+numero_contrato VARCHAR(50) NOT NULL,
 sucursal VARCHAR(100) NOT NULL,
 clasificacion_credito VARCHAR(100),
 producto_credito VARCHAR(100),
-modalidad_pago VARCHAR(50),
+modalidad_pago VARCHAR(150),
 fecha_otorgamiento DATE,
-fecha_vencimiento DATE,
 monto_original NUMERIC(18, 2),
+fecha_vencimiento DATE,
 tasa_ordinaria_nominal_anual NUMERIC(10, 6),
 tasa_moratoria_nominal_anual NUMERIC(10, 6),
-plazo_credito_meses INT,
+plazo_credito_meses INTEGER,
 frecuencia_pago_capital VARCHAR(50),
 frecuencia_pago_intereses VARCHAR(50),
+
+dias_mora INTEGER NOT NULL DEFAULT 0,
+capital_vigente NUMERIC(18, 2) NOT NULL DEFAULT 0.00,
+capital_vencido NUMERIC(18, 2) NOT NULL DEFAULT 0.00,
+int_dev_no_cobrados_vigentes NUMERIC(18, 2) NOT NULL DEFAULT 0.00,
+int_dev_no_cobrados_vencidos NUMERIC(18, 2) NOT NULL DEFAULT 0.00,
+int_dev_no_cobrados_ctas_orden NUMERIC(18, 2) NOT NULL DEFAULT 0.00,
+
+fecha_ultimo_pago_capital DATE,
+monto_ultimo_pago_capital NUMERIC(18, 2) NOT NULL DEFAULT 0.00,
+fecha_ultimo_pago_intereses DATE,
+monto_ultimo_pago_intereses NUMERIC(18, 2) NOT NULL DEFAULT 0.00,
+
+renovado_reestructurado_normal VARCHAR(50),
+emproblemado BOOLEAN NOT NULL DEFAULT FALSE,
+vigente_o_vencido VARCHAR(50),
+cargo_acreditado_parte_relacionada VARCHAR(100),
+
+monto_garantia_liquida NUMERIC(18, 2) NOT NULL DEFAULT 0.00,
+cuenta_garantia_liquida VARCHAR(100),
+monto_garantia_prendaria NUMERIC(18, 2) NOT NULL DEFAULT 0.00,
+monto_garantia_hipotecaria NUMERIC(18, 2) NOT NULL DEFAULT 0.00,
+eprc_contable_parte_cubierta NUMERIC(18, 2) NOT NULL DEFAULT 0.00,
+eprc_contable_parte_expuesta NUMERIC(18, 2) NOT NULL DEFAULT 0.00,
+eprc_contable_x_intereses_cee NUMERIC(18, 2) NOT NULL DEFAULT 0.00,
+importe_estimacion_adicional NUMERIC(18, 2) NOT NULL DEFAULT 0.00,
+
+localidad VARCHAR(150),
+estado VARCHAR(100),
+ocupacion VARCHAR(150),
+municipio VARCHAR(150),
+genero VARCHAR(50),
+fecha_nacimiento DATE,
+edad SMALLINT,
 tipo_cartera_calificacion VARCHAR(100),
 finalidad_credito VARCHAR(255),
 cce VARCHAR(100),
 
-/*
- Saldo y morosidad
- */
-dias_mora INT DEFAULT 0,
-vigente_o_vencido VARCHAR(50),
-capital_vigente NUMERIC(18, 2) DEFAULT 0.00,
-capital_vencido NUMERIC(18, 2) DEFAULT 0.00,
-int_dev_no_cobrados_vigentes NUMERIC(18, 2) DEFAULT 0.00,
-int_dev_no_cobrados_vencidos NUMERIC(18, 2) DEFAULT 0.00,
-int_dev_no_cobrados_ctas_orden NUMERIC(18, 2) DEFAULT 0.00,
+fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+fecha_actualizacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-/*
- Historiales por mes
- */
-fecha_ultimo_pago_capital DATE,
-monto_ultimo_pago_capital NUMERIC(18, 2) DEFAULT 0.00,
-fecha_ultimo_pago_intereses DATE,
-monto_ultimo_pago_intereses NUMERIC(18, 2) DEFAULT 0.00,
+ CONSTRAINT uk_cartera_mes_contrato
+     UNIQUE (mes_corte, numero_contrato),
 
-/*
- Estatus y riesgos
- */
-renovado_reestructurado_normal VARCHAR(50),
-emproblemado VARCHAR(50),
-cargo_acreditado_parte_relacionada VARCHAR(100),
-
-/*
- Garantias y EPRC
- */
-monto_garantia_liquida NUMERIC(18, 2) DEFAULT 0.00,
-cuenta_garantia_liquida VARCHAR(100),
-monto_garantia_prendaria NUMERIC(18, 2) DEFAULT 0.00,
-monto_garantia_hipotecaria NUMERIC(18, 2) DEFAULT 0.00,
-eprc_contable_parte_cubierta NUMERIC(18, 2) DEFAULT 0.00,
-eprc_contable_parte_expuesta NUMERIC(18, 2) DEFAULT 0.00,
-eprc_contable_x_intereses_cee NUMERIC(18, 2) DEFAULT 0.00,
-importe_estimacion_adicional NUMERIC(18, 2) DEFAULT 0.00,
-
-/*
- DATOS GENERADOS POR EL SISTEMA
- */
-tipo_y_estatus VARCHAR(150),
-cartera_tipo INT,
-cartera_vencida_por_producto VARCHAR(150),
-
- intervalo_dias_morosidad_y_tipo VARCHAR(100),
-intervalo_o_morosidad INT,
-intervalo_morosidad_y_tipo_cartera VARCHAR(150),
-
-cartera_total NUMERIC(18, 2) DEFAULT 0.00,
-recuperacion_en_el_mes_capital NUMERIC(18, 2) DEFAULT 0.00,
-recuperacion_en_el_mes_intereses NUMERIC(18, 2) DEFAULT 0.00,
-
-conv_abonos_a_dias INT,
-
-    -- Proyección mes 1
-abonos_restantes_mes_1 INT,
-importe_capital_proyectado_mes_1 NUMERIC(18, 2) DEFAULT 0.00,
-interes_devengado_proyectado_mes_1 NUMERIC(18, 2) DEFAULT 0.00,
-
-    -- Proyección mes 2
-abonos_restantes_mes_2 INT,
-importe_capital_proyectado_mes_2 NUMERIC(18, 2) DEFAULT 0.00,
-interes_devengado_proyectado_mes_2 NUMERIC(18, 2) DEFAULT 0.00,
-
-    -- Proyección mes 3
-abonos_restantes_mes_3 INT,
-importe_capital_proyectado_mes_3 NUMERIC(18, 2) DEFAULT 0.00,
-interes_devengado_proyectado_mes_3 NUMERIC(18, 2) DEFAULT 0.00,
-
-intervalo_edad INT,
-numero_producto VARCHAR(50),
-numero_creditos INT,
-
-ocupacion_concatenada VARCHAR(150),
-estado_municipio VARCHAR(200),
-contador INT,
-
-suc_prod_tasa VARCHAR(200),
-sucursal_credito_vencido VARCHAR(200),
-origen_socio VARCHAR(100),
-origen_auxiliar VARCHAR(100),
-otorgado_mes_realizo_mov VARCHAR(150),
-accion_seguimiento VARCHAR(250),
-
-cart_riesgo_traspaso_a_vencida INT,
-num_creditos_en_cartera_vencida INT,
-
-otorgado_mes_realizo_mov_suc VARCHAR(200),
-cart_riesgo_traspaso_a_vencida_suc VARCHAR(200),
-
-nivel_de_riesgo_sic VARCHAR(100),
-nivel_de_riesgo_sic_vencida VARCHAR(100),
-nivel_de_riesgo_sic_gestionada VARCHAR(100),
-
-plazo_remanente INT,
-plazo_remanente_sucursal_vigente_vencido VARCHAR(200),
-
-producto_generado VARCHAR(100),
-estado_generado VARCHAR(100),
-
-cred_premier_verif_domiciliaria BOOLEAN DEFAULT FALSE,
-tipo_y_estatus_sucursal VARCHAR(200),
-
-
-fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-
-    -- REGLAS
-    -- No se puede repetir el mismo contrato dentro del mismo mes.
-CONSTRAINT uk_cartera_mes_contrato
-    UNIQUE (mes_corte, no_contrato),
-
-    -- mes_corte siempre debe ser el primer día del mes.
 CONSTRAINT chk_mes_corte_inicio_mes
-    CHECK (mes_corte = DATE_TRUNC('month', mes_corte)::DATE),
+    CHECK ( mes_corte = DATE_TRUNC('month', mes_corte)::DATE
+                                       ),
 
-    -- fecha_corte debe ser el último día del mismo mes.
 CONSTRAINT chk_fecha_corte_fin_mes
-    CHECK (fecha_corte = (mes_corte + INTERVAL '1 month' - INTERVAL '1 day')::DATE )
+    CHECK (fecha_corte =(
+mes_corte + INTERVAL '1 month' - INTERVAL '1 day' )::DATE ),
+
+ CONSTRAINT chk_cartera_dias_mora
+     CHECK (dias_mora >= 0),
+
+CONSTRAINT chk_cartera_edad
+    CHECK (edad IS NULL  OR edad BETWEEN 0 AND 130
+                                       ),
+
+CONSTRAINT chk_cartera_plazo_credito
+    CHECK ( plazo_credito_meses IS NULL OR plazo_credito_meses >= 0 )
 );
 
-
--- TRIGGER PARA ACTUALIZAR fecha_actualizacion
+/*
+ Trigger para actualizar fechas
+ */
 CREATE OR REPLACE FUNCTION fn_actualizar_fecha_actualizacion()
     RETURNS TRIGGER AS $$
 BEGIN
@@ -228,90 +156,154 @@ END;
 $$ LANGUAGE plpgsql;
 
 
-CREATE TRIGGER trg_actualizar_fecha_actualizacion_usuario
-    BEFORE UPDATE ON usuarios
+DROP TRIGGER IF EXISTS
+    trigger_actualizar_fecha_actualizacion_cartera
+    ON cartera_datos;
+
+CREATE TRIGGER trigger_actualizar_fecha_actualizacion_cartera
+    BEFORE UPDATE ON cartera_datos
     FOR EACH ROW
 EXECUTE FUNCTION fn_actualizar_fecha_actualizacion();
 
 
-CREATE TRIGGER trg_actualizar_fecha_actualizacion_cartera
-    BEFORE UPDATE ON cartera_analisis_mensual
+DROP TRIGGER IF EXISTS
+    trigger_actualizar_fecha_actualizacion_calculados
+    ON cartera_datos_calculados;
+
+CREATE TRIGGER trigger_actualizar_fecha_actualizacion_calculados
+    BEFORE UPDATE ON cartera_datos_calculados
     FOR EACH ROW
 EXECUTE FUNCTION fn_actualizar_fecha_actualizacion();
 
 
--- Indices de usuarios
 
 
-CREATE INDEX idx_usuarios_id_rol
-    ON usuarios(id_rol);
 
-CREATE INDEX idx_usuarios_estado
-    ON usuarios(estado);
-/*
-/*
-Cartera
- */
+CREATE TABLE cartera_datos_calculados (
+id_analisis_mensual UUID PRIMARY KEY,
 
--- Filtro principal por mes
-CREATE INDEX idx_cartera_mes
-    ON cartera_analisis_mensual(mes_corte);
+tipo_y_estatus VARCHAR(150),
+cartera_tipo SMALLINT,
+producto_tipo_cartera_estatus VARCHAR(150),
+intervalo_dias_morosidad_y_tipo VARCHAR(100),
+intervalo_morosidad_y_tipo_cartera VARCHAR(20),
 
--- Filtros comunes por mes
-CREATE INDEX idx_cartera_mes_sucursal
-    ON cartera_analisis_mensual(mes_corte, sucursal);
+cartera_total NUMERIC(18, 2),
+recuperacion_en_el_mes_capital NUMERIC(18, 2),
+recuperacion_en_el_mes_intereses NUMERIC(18, 2),
+conv_abonos_a_dias SMALLINT,
 
-CREATE INDEX idx_cartera_mes_estatus
-    ON cartera_analisis_mensual(mes_corte, vigente_o_vencido);
+abonos_restantes_mes_1 INTEGER,
+importe_capital_proyectado_mes_1 NUMERIC(18, 2),
+interes_devengado_proyectado_mes_1 NUMERIC(18, 2),
+abonos_restantes_mes_2 INTEGER,
+importe_capital_proyectado_mes_2 NUMERIC(18, 2),
+interes_devengado_proyectado_mes_2 NUMERIC(18, 2),
 
-CREATE INDEX idx_cartera_mes_producto
-    ON cartera_analisis_mensual(mes_corte, producto_credito);
+abonos_restantes_mes_3 INTEGER,
+importe_capital_proyectado_mes_3 NUMERIC(18, 2),
+interes_devengado_proyectado_mes_3 NUMERIC(18, 2),
 
-CREATE INDEX idx_cartera_mes_ocupacion
-    ON cartera_analisis_mensual(mes_corte, ocupacion);
+dias_por_vencer SMALLINT,
+intervalo_edad SMALLINT,
+numero_producto VARCHAR(50),
+numero_creditos SMALLINT,
+ocupacion_agrupada VARCHAR(150),
+estado_municipio VARCHAR(300),
 
-CREATE INDEX idx_cartera_mes_riesgo
-    ON cartera_analisis_mensual(mes_corte, nivel_de_riesgo_sic);
+suc_prod_tasa VARCHAR(200),
+sucursal_credito_vigente_vencido VARCHAR(250),
+origen_socio VARCHAR(100),
+origen_auxiliar VARCHAR(100),
+otorgado_mes_realizo_mov VARCHAR(50),
+accion_seguimiento VARCHAR(250),
 
-CREATE INDEX idx_cartera_mes_riesgo_vencida
-    ON cartera_analisis_mensual(mes_corte, nivel_de_riesgo_sic_vencida);
+cart_riesgo_traspaso_a_vencida SMALLINT,
+otorgado_mes_mov_riesgo_cartera_vencida VARCHAR(100),
+numero_creditos_cartera_vencida SMALLINT,
+otorgado_mes_realizo_mov_sucursal VARCHAR(200),
+cart_riesgo_traspaso_vencida_sucursal VARCHAR(200),
+otorgado_mes_mov_riesgo_vencida_sucursal VARCHAR(250),
 
-CREATE INDEX idx_cartera_mes_riesgo_gestionada
-    ON cartera_analisis_mensual(mes_corte, nivel_de_riesgo_sic_gestionada);
+nivel_de_riesgo_sic VARCHAR(100),
+nivel_de_riesgo_sic_vencida VARCHAR(100),
+nivel_de_riesgo_sic_gestionada VARCHAR(100),
 
-CREATE INDEX idx_cartera_mes_clasificacion
-    ON cartera_analisis_mensual(mes_corte, clasificacion_credito);
+plazo_remanente SMALLINT,
+plazo_remanente_sucursal_vigente_vencido VARCHAR(200),
+numero_estado_municipio VARCHAR(150),
+credito_premier_requiere_verificacion_domiciliaria BOOLEAN NOT NULL DEFAULT FALSE,
+sucursal_tipo_cartera_estatus VARCHAR(200),
 
-CREATE INDEX idx_cartera_mes_municipio
-    ON cartera_analisis_mensual(mes_corte, municipio);
+fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+fecha_actualizacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-CREATE INDEX idx_cartera_mes_estado
-    ON cartera_analisis_mensual(mes_corte, estado);
+ CONSTRAINT fk_calculados_cartera_base
+     FOREIGN KEY (id_analisis_mensual) REFERENCES cartera_datos(id_analisis_mensual) ON DELETE CASCADE,
 
- -- Búsquedas directas
+CONSTRAINT chk_calculados_cartera_tipo CHECK (
+    cartera_tipo IS NULL
+        OR cartera_tipo BETWEEN 0 AND 2 ),
 
- CREATE INDEX idx_cartera_numero_socio
-    ON cartera_analisis_mensual(numero_socio);
+CONSTRAINT chk_calculados_dias_por_vencer
+   CHECK ( dias_por_vencer IS NULL OR dias_por_vencer BETWEEN 1 AND 3  ),
 
-CREATE INDEX idx_cartera_no_contrato
-    ON cartera_analisis_mensual(no_contrato);
+CONSTRAINT chk_calculados_intervalo_edad
+ CHECK ( intervalo_edad IS NULL  OR intervalo_edad BETWEEN 1 AND 14
+                                                  ),
+CONSTRAINT chk_calculados_riesgo_traspaso CHECK (
+  cart_riesgo_traspaso_a_vencida IS NULL OR cart_riesgo_traspaso_a_vencida BETWEEN 0 AND 3 )
 
-CREATE INDEX idx_cartera_nombre_acreditado
-    ON cartera_analisis_mensual(nombre_acreditado);
 
--- Dashboard específico: vencidos por sucursal y ocupación
-CREATE INDEX idx_cartera_mes_vencido_sucursal_ocupacion
-    ON cartera_analisis_mensual(mes_corte, vigente_o_vencido, sucursal, ocupacion);
- */
+);
 
-/*
- Meses disponibles
- */
-CREATE OR REPLACE VIEW vw_meses_cartera_disponibles AS
+/* Vista para el Dropdown de selección de mes*/
+CREATE OR REPLACE VIEW view_meses_cartera_disponibles AS
 SELECT DISTINCT
     mes_corte,
     fecha_corte
-FROM cartera_analisis_mensual
+FROM cartera_datos
 ORDER BY mes_corte DESC;
 
+CREATE INDEX IF NOT EXISTS index_preview_cartera
+    ON cartera_datos (
+                      mes_corte DESC,
+                      sucursal,
+                      numero_contrato
+        )
+    INCLUDE (
+        id_analisis_mensual,
+        nombre_acreditado,
+        numero_socio,
+        producto_credito,
+        capital_vigente
+        );
 
+
+CREATE INDEX IF NOT EXISTS index_cartera_mes_estatus
+    ON cartera_datos (
+   mes_corte,
+   vigente_o_vencido
+        );
+
+
+CREATE INDEX IF NOT EXISTS index_cartera_mes_producto
+    ON cartera_datos (
+ mes_corte,
+ producto_credito
+        );
+
+
+CREATE INDEX IF NOT EXISTS index_cartera_mes_clasificacion
+    ON cartera_datos (
+mes_corte,
+clasificacion_credito
+        );
+
+
+CREATE INDEX IF NOT EXISTS index_cartera_numero_socio
+    ON cartera_datos(numero_socio);
+
+
+CREATE INDEX IF NOT EXISTS index_cartera_numero_contrato
+    ON cartera_datos(numero_contrato);
