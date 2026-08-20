@@ -166,16 +166,6 @@ CREATE TRIGGER trigger_actualizar_fecha_actualizacion_cartera
 EXECUTE FUNCTION fn_actualizar_fecha_actualizacion();
 
 
-DROP TRIGGER IF EXISTS
-    trigger_actualizar_fecha_actualizacion_calculados
-    ON cartera_datos_calculados;
-
-CREATE TRIGGER trigger_actualizar_fecha_actualizacion_calculados
-    BEFORE UPDATE ON cartera_datos_calculados
-    FOR EACH ROW
-EXECUTE FUNCTION fn_actualizar_fecha_actualizacion();
-
-
 
 
 
@@ -187,6 +177,10 @@ cartera_tipo SMALLINT,
 producto_tipo_cartera_estatus VARCHAR(150),
 intervalo_dias_morosidad_y_tipo VARCHAR(100),
 intervalo_morosidad_y_tipo_cartera VARCHAR(20),
+
+intervalo_morosidad SMALLINT,
+contador SMALLINT,
+producto_generado VARCHAR(50),
 
 cartera_total NUMERIC(18, 2),
 recuperacion_en_el_mes_capital NUMERIC(18, 2),
@@ -252,8 +246,10 @@ CONSTRAINT chk_calculados_intervalo_edad
  CHECK ( intervalo_edad IS NULL  OR intervalo_edad BETWEEN 1 AND 14
                                                   ),
 CONSTRAINT chk_calculados_riesgo_traspaso CHECK (
-  cart_riesgo_traspaso_a_vencida IS NULL OR cart_riesgo_traspaso_a_vencida BETWEEN 0 AND 3 )
+  cart_riesgo_traspaso_a_vencida IS NULL OR cart_riesgo_traspaso_a_vencida BETWEEN 0 AND 3 ),
 
+CONSTRAINT chk_calculados_intervalo_morosidad
+ CHECK (intervalo_morosidad IS NULL OR intervalo_morosidad BETWEEN 1 AND 10)
 
 );
 
@@ -307,3 +303,12 @@ CREATE INDEX IF NOT EXISTS index_cartera_numero_socio
 
 CREATE INDEX IF NOT EXISTS index_cartera_numero_contrato
     ON cartera_datos(numero_contrato);
+
+DROP TRIGGER IF EXISTS
+    trigger_actualizar_fecha_actualizacion_calculados
+    ON cartera_datos_calculados;
+
+CREATE TRIGGER trigger_actualizar_fecha_actualizacion_calculados
+    BEFORE UPDATE ON cartera_datos_calculados
+    FOR EACH ROW
+EXECUTE FUNCTION fn_actualizar_fecha_actualizacion();
