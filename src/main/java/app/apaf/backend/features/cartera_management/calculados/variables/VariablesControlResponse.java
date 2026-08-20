@@ -1,0 +1,31 @@
+package app.apaf.backend.features.cartera_management.calculados.variables;
+
+public record VariablesControlResponse(
+        String tipoYEstatus,
+        Short carteraTipo,
+        String productoTipoCarteraEstatus,
+        String intervaloDiasMorosidadYTipo,
+        String intervaloMorosidadYTipoCartera,
+        Short intervaloMorosidad,
+        Short contador,
+        String productoGenerado,
+        String numeroProducto,
+        Short numeroCreditos,
+        String ocupacionAgrupada,
+        String estadoMunicipio,
+        String sucProdTasa,
+        String sucursalCreditoVigenteVencido,
+        String origenSocio,
+        String origenAuxiliar,
+        String otorgadoMesRealizoMov,
+        String accionSeguimiento,
+        String otorgadoMesMovRiesgoCarteraVencida,
+        Short numeroCreditosCarteraVencida,
+        String otorgadoMesRealizoMovSucursal,
+        String cartRiesgoTraspasoVencidaSucursal,
+        String otorgadoMesMovRiesgoVencidaSucursal,
+        String plazoRemanenteSucursalVigenteVencido,
+        String numeroEstadoMunicipio,
+        Boolean creditoPremierRequiereVerificacionDomiciliaria,
+        String sucursalTipoCarteraEstatus) {
+}

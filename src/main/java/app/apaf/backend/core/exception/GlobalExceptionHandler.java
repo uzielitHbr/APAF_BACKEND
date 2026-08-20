@@ -79,6 +79,36 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
+    @ExceptionHandler(app.apaf.backend.domain.cartera.exception.CarteraPeriodoInvalidoException.class)
+    public ResponseEntity<Map<String, Object>> handleCarteraPeriodoInvalidoException(app.apaf.backend.domain.cartera.exception.CarteraPeriodoInvalidoException ex) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("timestamp", LocalDateTime.now());
+        response.put("status", HttpStatus.BAD_REQUEST.value());
+        response.put("error", "CARTERA_PERIODO_INVALIDO");
+        response.put("message", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(app.apaf.backend.domain.cartera.exception.CarteraPeriodoNoEncontradoException.class)
+    public ResponseEntity<Map<String, Object>> handleCarteraPeriodoNoEncontradoException(app.apaf.backend.domain.cartera.exception.CarteraPeriodoNoEncontradoException ex) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("timestamp", LocalDateTime.now());
+        response.put("status", HttpStatus.NOT_FOUND.value());
+        response.put("error", "CARTERA_PERIODO_NO_ENCONTRADO");
+        response.put("message", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
+    @ExceptionHandler(app.apaf.backend.domain.cartera.exception.CarteraTotalesInconsistentesException.class)
+    public ResponseEntity<Map<String, Object>> handleCarteraTotalesInconsistentesException(app.apaf.backend.domain.cartera.exception.CarteraTotalesInconsistentesException ex) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("timestamp", LocalDateTime.now());
+        response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+        response.put("error", "CARTERA_TOTALES_INCONSISTENTES");
+        response.put("message", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+
     // Trows
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException ex) {
