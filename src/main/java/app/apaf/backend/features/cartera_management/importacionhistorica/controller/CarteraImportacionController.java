@@ -1,17 +1,8 @@
 package app.apaf.backend.features.cartera_management.importacionhistorica.controller;
 
-import app.apaf.backend.features.cartera_management.importacionhistorica.controller.*;
 import app.apaf.backend.features.cartera_management.importacionhistorica.commands.*;
 import app.apaf.backend.features.cartera_management.importacionhistorica.dto.*;
-import app.apaf.backend.features.cartera_management.importacionhistorica.services.*;
-import app.apaf.backend.features.cartera_management.importacionhistorica.domain.*;
-import app.apaf.backend.features.cartera_management.importacionhistorica.repository.*;
-import app.apaf.backend.features.cartera_management.importacionhistorica.config.*;
-import app.apaf.backend.features.cartera_management.importacionhistorica.events.*;
-import app.apaf.backend.features.cartera_management.importacionhistorica.exception.*;
 
-
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.PastOrPresent;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -34,6 +25,8 @@ import org.springframework.web.multipart.MultipartFile;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.nio.charset.Charset;
+
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 
 @RestController
@@ -45,6 +38,7 @@ public class CarteraImportacionController {
 
     private final ImportarCarteraHistoricaHandler handler;
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA')")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Registrar cartera mesnual", description = "Importa cartera cada mes  sin procesar por usuarios , Necesita mes de corte a ingresar para validar los datos no esten previamente registrados")
     public ResponseEntity<ResultadoImportacionHistorica> importarCartera(

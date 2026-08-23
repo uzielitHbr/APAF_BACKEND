@@ -49,7 +49,7 @@ public class CarteraCsvValidator {
         // Validación de base de datos
         if (repository.findByMesCorteAndEstado(mesCorte, "COMPLETADA").isPresent()) {
             throw new PeriodoCarteraYaImportadoException(
-                    "El periodo " + command.mesCorte() + " ya se encuentra importado como COMPLETADA.");
+                    "El periodo " + command.mesCorte() + " ya se encuentra importado");
         }
 
         if (repository.findByHashSha256AndEstado(hash, "COMPLETADA").isPresent()) {

@@ -1,15 +1,6 @@
 package app.apaf.backend.features.cartera_management.importacionhistorica.services;
 
-import app.apaf.backend.features.cartera_management.importacionhistorica.controller.*;
-import app.apaf.backend.features.cartera_management.importacionhistorica.commands.*;
 import app.apaf.backend.features.cartera_management.importacionhistorica.dto.*;
-import app.apaf.backend.features.cartera_management.importacionhistorica.services.*;
-import app.apaf.backend.features.cartera_management.importacionhistorica.domain.*;
-import app.apaf.backend.features.cartera_management.importacionhistorica.repository.*;
-import app.apaf.backend.features.cartera_management.importacionhistorica.config.*;
-import app.apaf.backend.features.cartera_management.importacionhistorica.events.*;
-import app.apaf.backend.features.cartera_management.importacionhistorica.exception.*;
-
 
 import app.apaf.backend.features.cartera_management.importacionhistorica.exception.ArchivoCarteraNoEncontradoException;
 import app.apaf.backend.features.cartera_management.importacionhistorica.exception.FormatoCsvInvalidoException;
@@ -28,7 +19,8 @@ public class CarteraCsvParser {
 
     public List<CarteraCsvRow> parse(Path file, Charset charset) {
         if (!Files.exists(file) || !Files.isRegularFile(file) || !Files.isReadable(file)) {
-            throw new ArchivoCarteraNoEncontradoException("No se encontró o no se puede leer el archivo: " + file.toAbsolutePath());
+            throw new ArchivoCarteraNoEncontradoException(
+                    "No se encontró o no se puede leer el archivo: " + file.toAbsolutePath());
         }
 
         List<CarteraCsvRow> rows = new ArrayList<>();
@@ -40,7 +32,7 @@ public class CarteraCsvParser {
                     lineNumber++;
                     continue; // Saltar líneas vacías
                 }
-                
+
                 String cleanLine = line;
                 // Eliminar comillas externas si existen en la línea completa
                 if (cleanLine.startsWith("\"") && cleanLine.endsWith("\"") && cleanLine.length() >= 2) {
@@ -48,9 +40,11 @@ public class CarteraCsvParser {
                 }
 
                 String[] parts = cleanLine.split("\\|", -1); // Preservar columnas vacías al final
-                
+
                 if (parts.length != 47) {
-                    throw new FormatoCsvInvalidoException(String.format("Error en archivo %s, línea %d: se esperaban 47 columnas pero se encontraron %d", file.getFileName().toString(), lineNumber, parts.length));
+                    throw new FormatoCsvInvalidoException(String.format(
+                            "Error en archivo %s, línea %d: se esperaban 47 columnas pero se encontraron %d",
+                            file.getFileName().toString(), lineNumber, parts.length));
                 }
 
                 rows.add(CarteraCsvRow.builder()
@@ -60,11 +54,13 @@ public class CarteraCsvParser {
                 lineNumber++;
             }
         } catch (IOException e) {
-             throw new FormatoCsvInvalidoException("Error de IO al leer el archivo: " + file.getFileName().toString() + ". Detalles: " + e.getMessage());
+            throw new FormatoCsvInvalidoException("Error de IO al leer el archivo: " + file.getFileName().toString()
+                    + ". Detalles: " + e.getMessage());
         }
 
         if (rows.isEmpty()) {
-            throw new FormatoCsvInvalidoException("El archivo " + file.getFileName().toString() + " está vacío o no contiene filas válidas.");
+            throw new FormatoCsvInvalidoException(
+                    "El archivo " + file.getFileName().toString() + " está vacío o no contiene filas válidas.");
         }
 
         return rows;

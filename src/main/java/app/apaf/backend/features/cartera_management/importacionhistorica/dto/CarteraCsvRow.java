@@ -1,16 +1,5 @@
 package app.apaf.backend.features.cartera_management.importacionhistorica.dto;
 
-import app.apaf.backend.features.cartera_management.importacionhistorica.controller.*;
-import app.apaf.backend.features.cartera_management.importacionhistorica.commands.*;
-import app.apaf.backend.features.cartera_management.importacionhistorica.dto.*;
-import app.apaf.backend.features.cartera_management.importacionhistorica.services.*;
-import app.apaf.backend.features.cartera_management.importacionhistorica.domain.*;
-import app.apaf.backend.features.cartera_management.importacionhistorica.repository.*;
-import app.apaf.backend.features.cartera_management.importacionhistorica.config.*;
-import app.apaf.backend.features.cartera_management.importacionhistorica.events.*;
-import app.apaf.backend.features.cartera_management.importacionhistorica.exception.*;
-
-
 import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
@@ -28,11 +17,11 @@ public class CarteraCsvRow {
         }
         return null;
     }
-    
+
     public String getRawColumn(int index) {
-         if (index >= 0 && index < columns.size()) {
-             return columns.get(index);
-         }
-         return null;
+        if (index >= 0 && index < columns.size()) {
+            return columns.get(index);
+        }
+        return null;
     }
 }
