@@ -24,9 +24,9 @@ public class ImportarCarteraHistoricaHandler {
         reporte.throwIfInvalid();
 
         CarteraImportacionHistorica auditoria = CarteraImportacionHistorica.builder()
-                .mesCorte(command.periodo().atDay(1))
-                .fechaCorte(command.periodo().atEndOfMonth())
-                .nombreArchivo(command.archivo().getFileName().toString())
+                .mesCorte(command.mesCorte().atDay(1))
+                .fechaCorte(command.mesCorte().atEndOfMonth())
+                .nombreArchivo(command.nombreArchivo())
                 .hashSha256(hash)
                 .estado("VALIDADA") // Cambiará a COMPLETADA/FALLIDA en la persistencia
                 .totalFilas(filas.size())
@@ -35,7 +35,7 @@ public class ImportarCarteraHistoricaHandler {
                 .filasCalculadas(0)
                 .filasRechazadas(0)
                 .versionImportador("1.0")
-                .ejecutadoPor("EQUIPO_DESARROLLO")
+                .ejecutadoPor(command.idUsuarioCreacion())
                 .fechaInicio(LocalDateTime.now())
                 .build();
 

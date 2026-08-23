@@ -107,8 +107,8 @@ public class CarteraDatos {
     @Column(name = "renovado_reestructurado_normal")
     private String renovadoReestructuradoNormal;
 
-    @Column(name = "emproblemado", nullable = false)
-    private Boolean emproblemado;
+    @Column(name = "emproblemado", nullable = false, length = 20)
+    private String emproblemado;
 
     @Column(name = "vigente_o_vencido")
     private String vigenteOVencido;

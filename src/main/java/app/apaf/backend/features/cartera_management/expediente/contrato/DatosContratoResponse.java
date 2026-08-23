@@ -14,7 +14,7 @@ public record DatosContratoResponse(
         LocalDate fechaVencimiento,
         Integer plazoCreditoMeses,
         String renovadoReestructuradoNormal,
-        Boolean emproblemado,
+        String emproblemado,
         String tipoCarteraCalificacion,
         String finalidadCredito,
         String cce) {

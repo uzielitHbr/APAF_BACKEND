@@ -2,10 +2,13 @@ package app.apaf.backend.features.cartera_management.importacionhistorica;
 
 import app.apaf.backend.features.cartera_management.importacionhistorica.exception.ContratoDuplicadoEnArchivoException;
 import app.apaf.backend.features.cartera_management.importacionhistorica.exception.PeriodoCarteraYaImportadoException;
+import app.apaf.backend.features.cartera_management.importacionhistorica.exception.IncongruenciaFechaArchivoException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -17,13 +20,31 @@ public class CarteraCsvValidator {
     private final CsvValueParser valueParser;
     private final CarteraImportacionHistoricaRepository repository;
 
+    private static final Map<String, Integer> MESES = new HashMap<>();
+    static {
+        MESES.put("ene", 1);
+        MESES.put("feb", 2);
+        MESES.put("mar", 3);
+        MESES.put("abr", 4);
+        MESES.put("may", 5);
+        MESES.put("jun", 6);
+        MESES.put("jul", 7);
+        MESES.put("ago", 8);
+        MESES.put("sep", 9);
+        MESES.put("oct", 10);
+        MESES.put("nov", 11);
+        MESES.put("dic", 12);
+    }
+
     public ReporteValidacionCsv validar(ImportarCarteraHistoricaCommand command, List<CarteraCsvRow> rows, String hash) {
+        validarNombreArchivo(command.nombreArchivo(), command.mesCorte().getYear(), command.mesCorte().getMonthValue());
+        
         ReporteValidacionCsv reporte = new ReporteValidacionCsv(500);
-        LocalDate mesCorte = command.periodo().atDay(1);
+        LocalDate mesCorte = command.mesCorte().atDay(1);
         
         // Validación de base de datos
         if (repository.findByMesCorteAndEstado(mesCorte, "COMPLETADA").isPresent()) {
-            throw new PeriodoCarteraYaImportadoException("El periodo " + command.periodo() + " ya se encuentra importado como COMPLETADA.");
+            throw new PeriodoCarteraYaImportadoException("El periodo " + command.mesCorte() + " ya se encuentra importado como COMPLETADA.");
         }
         
         if (repository.findByHashSha256AndEstado(hash, "COMPLETADA").isPresent()) {
@@ -31,7 +52,7 @@ public class CarteraCsvValidator {
         }
 
         Set<String> contratosSet = new HashSet<>();
-        LocalDate fechaCorte = command.periodo().atEndOfMonth();
+        LocalDate fechaCorte = command.mesCorte().atEndOfMonth();
 
         for (CarteraCsvRow row : rows) {
             int ln = row.getLineNumber();
@@ -90,7 +111,11 @@ public class CarteraCsvValidator {
             validarBigDecimal(row, 22, "montoUltimoPagoCapital", ln, reporte);
             validarBigDecimal(row, 24, "montoUltimoPagoIntereses", ln, reporte);
             
-            validarBoolean(row, 26, "emproblemado", ln, reporte);
+            try {
+                valueParser.parseEmproblemado(row.getColumn(26), "emproblemado", ln);
+            } catch (Exception e) {
+                reporte.addError(ln, "emproblemado", e.getMessage());
+            }
             
             validarBigDecimal(row, 29, "montoGarantiaLiquida", ln, reporte);
             validarBigDecimal(row, 31, "montoGarantiaPrendaria", ln, reporte);
@@ -155,16 +180,60 @@ public class CarteraCsvValidator {
         }
     }
     
-    private void validarBoolean(CarteraCsvRow row, int index, String field, int ln, ReporteValidacionCsv reporte) {
+    private void validarCadena(CarteraCsvRow row, int index, String field, int ln, ReporteValidacionCsv reporte) {
         String val = row.getColumn(index);
         if (val == null || val.isBlank()) {
             reporte.addError(ln, field, "El valor es obligatorio y no puede estar vacío");
-            return;
         }
-        try {
-            valueParser.parseBoolean(val, field, ln);
-        } catch (Exception e) {
-            reporte.addError(ln, field, e.getMessage());
+    }
+
+    private void validarNombreArchivo(String nombreArchivo, int expectedYear, int expectedMonth) {
+        if (nombreArchivo == null || nombreArchivo.isBlank()) return;
+        
+        String nombreLower = nombreArchivo.toLowerCase();
+        
+        // Buscar pista de mes
+        Integer mesEncontrado = null;
+        for (Map.Entry<String, Integer> entry : MESES.entrySet()) {
+            if (nombreLower.contains(entry.getKey())) {
+                mesEncontrado = entry.getValue();
+                break; // asume que el primer mes que encuentre es el correcto
+            }
+        }
+        
+        // Buscar pista de año (ej. 25 o 2025)
+        Integer anioEncontrado = null;
+        String anioCorto = String.valueOf(expectedYear).substring(2);
+        String anioLargo = String.valueOf(expectedYear);
+        
+        // Buscamos si el nombre contiene algún otro año reciente (2020 a 2030)
+        for (int y = 2020; y <= 2030; y++) {
+            String yCorto = String.valueOf(y).substring(2);
+            String yLargo = String.valueOf(y);
+            // Comprobamos de forma simple si contiene el año largo o si contiene _yCorto o yCorto_ o algo que sugiera ese año
+            // Para evitar falsos positivos con otros números, seremos cautelosos.
+            if (nombreLower.contains(yLargo)) {
+                anioEncontrado = y;
+                break;
+            }
+        }
+        // Si no encontró año largo, buscamos el corto asociado al mes o versión
+        if (anioEncontrado == null) {
+             for (int y = 2020; y <= 2030; y++) {
+                String yCorto = String.valueOf(y).substring(2);
+                // Si el nombre contiene por ejemplo "dic_25" o "dic25" o "25" después del mes
+                 if (nombreLower.matches(".*[_-]" + yCorto + "[_\\.\\-].*") || nombreLower.matches(".*" + yCorto + "\\..*")) {
+                     anioEncontrado = y;
+                     break;
+                 }
+             }
+        }
+
+        if (mesEncontrado != null && mesEncontrado != expectedMonth) {
+            throw new IncongruenciaFechaArchivoException("El mes sugerido en el nombre del archivo no coincide con el mes seleccionado.");
+        }
+        if (anioEncontrado != null && anioEncontrado != expectedYear) {
+            throw new IncongruenciaFechaArchivoException("El año sugerido en el nombre del archivo no coincide con el año seleccionado.");
         }
     }
 }

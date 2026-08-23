@@ -49,7 +49,7 @@ public class CarteraCsvMapper {
         entity.setFechaUltimoPagoIntereses(valueParser.parseLocalDate(row.getColumn(23), "fechaUltimoPagoIntereses", ln));
         entity.setMontoUltimoPagoIntereses(valueParser.parseBigDecimal(row.getColumn(24), "montoUltimoPagoIntereses", ln));
         entity.setRenovadoReestructuradoNormal(row.getColumn(25));
-        entity.setEmproblemado(valueParser.parseBoolean(row.getColumn(26), "emproblemado", ln));
+        entity.setEmproblemado(row.getColumn(26));
         entity.setVigenteOVencido(row.getColumn(27));
         entity.setCargoAcreditadoParteRelacionada(row.getColumn(28));
         entity.setMontoGarantiaLiquida(valueParser.parseBigDecimal(row.getColumn(29), "montoGarantiaLiquida", ln));

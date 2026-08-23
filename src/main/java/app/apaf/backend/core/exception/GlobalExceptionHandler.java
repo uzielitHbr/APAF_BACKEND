@@ -141,6 +141,37 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
+    @ExceptionHandler({
+        app.apaf.backend.features.cartera_management.importacionhistorica.exception.FormatoCsvInvalidoException.class,
+        app.apaf.backend.features.cartera_management.importacionhistorica.exception.CampoCsvInvalidoException.class,
+        app.apaf.backend.features.cartera_management.importacionhistorica.exception.ContratoDuplicadoEnArchivoException.class,
+        app.apaf.backend.features.cartera_management.importacionhistorica.exception.PeriodoCarteraYaImportadoException.class,
+        app.apaf.backend.features.cartera_management.importacionhistorica.exception.IncongruenciaFechaArchivoException.class
+    })
+    public ResponseEntity<Map<String, Object>> handleImportacionCarteraExceptions(RuntimeException ex) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("timestamp", LocalDateTime.now());
+        response.put("status", HttpStatus.BAD_REQUEST.value());
+        response.put("error", "Error en Importación de Cartera");
+        response.put("message", ex.getMessage());
+        
+        // Extraer detalles si el mensaje los contiene para facilitar al frontend
+        // Ej: "Error en línea 15, campo emproblemado: ..."
+        String msg = ex.getMessage();
+        if (msg != null && msg.contains("línea") && msg.contains("campo")) {
+            try {
+                String lineaStr = msg.split("línea")[1].split(",")[0].trim();
+                String campoStr = msg.split("campo")[1].split(":")[0].trim();
+                response.put("linea", lineaStr);
+                response.put("columna", campoStr);
+            } catch (Exception ignored) {
+                // Si falla el parseo, solo devolvemos el mensaje general
+            }
+        }
+        
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
     // Error 500
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneralException(Exception ex) {

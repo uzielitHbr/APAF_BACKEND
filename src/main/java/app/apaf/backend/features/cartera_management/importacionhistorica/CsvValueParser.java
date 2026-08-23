@@ -68,4 +68,14 @@ public class CsvValueParser {
         }
         throw new CampoCsvInvalidoException(String.format("Error en línea %d, campo %s: valor '%s' no es un booleano válido (0/1 o true/false)", lineIndex, fieldName, value));
     }
+    public String parseEmproblemado(String value, String fieldName, int lineIndex) {
+        if (value == null || value.isBlank()) {
+            throw new CampoCsvInvalidoException(String.format("Error en línea %d, campo %s: el valor es obligatorio", lineIndex, fieldName));
+        }
+        String trimmed = value.trim();
+        if ("0".equals(trimmed) || "1".equals(trimmed) || "Emproblemado".equals(trimmed)) {
+            return trimmed;
+        }
+        throw new CampoCsvInvalidoException(String.format("Error en línea %d, campo %s: valor '%s' no es válido. Debe ser '0', '1' o 'Emproblemado'", lineIndex, fieldName, value));
+    }
 }

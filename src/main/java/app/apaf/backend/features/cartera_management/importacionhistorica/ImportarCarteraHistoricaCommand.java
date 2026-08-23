@@ -5,8 +5,10 @@ import java.nio.file.Path;
 import java.time.YearMonth;
 
 public record ImportarCarteraHistoricaCommand(
-        YearMonth periodo,
-        Path archivo,
-        Charset charset,
-        int batchSize) {
+                YearMonth mesCorte,
+                Path archivo,
+                String nombreArchivo,
+                Charset charset,
+                int batchSize,
+                String idUsuarioCreacion) {
 }

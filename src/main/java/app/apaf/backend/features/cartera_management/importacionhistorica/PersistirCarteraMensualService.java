@@ -28,7 +28,7 @@ public class PersistirCarteraMensualService {
     private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     private final app.apaf.backend.features.cartera_management.importacionhistorica.events.CarteraImportadaEvent publishCarteraImportadaEvent(ImportarCarteraHistoricaCommand command) {
-        return new app.apaf.backend.features.cartera_management.importacionhistorica.events.CarteraImportadaEvent(this, command.periodo());
+        return new app.apaf.backend.features.cartera_management.importacionhistorica.events.CarteraImportadaEvent(this, command.mesCorte());
     }
 
     @Transactional
@@ -44,10 +44,10 @@ public class PersistirCarteraMensualService {
             
             List<CarteraDatos> batchBase = new ArrayList<>();
             int totalInsertadas = 0;
-            LocalDate fechaCorteAnterior = command.periodo().minusMonths(1).atEndOfMonth();
+            LocalDate fechaCorteAnterior = command.mesCorte().minusMonths(1).atEndOfMonth();
 
             for (CarteraCsvRow row : rows) {
-                CarteraDatos base = mapper.map(row, command.periodo(), auditoria.getIdImportacion());
+                CarteraDatos base = mapper.map(row, command.mesCorte(), auditoria.getIdImportacion());
                 batchBase.add(base);
 
                 if (batchBase.size() >= command.batchSize()) {
@@ -70,7 +70,7 @@ public class PersistirCarteraMensualService {
             }
 
             return ResultadoImportacionHistorica.builder()
-                    .periodo(command.periodo())
+                    .periodo(command.mesCorte())
                     .exitoso(true)
                     .totalFilas(rows.size())
                     .filasInsertadas(totalInsertadas)
@@ -81,7 +81,7 @@ public class PersistirCarteraMensualService {
             String errorMsg = e.getMessage() != null ? e.getMessage() : e.toString();
             estadoService.marcarComoFallida(auditoria.getIdImportacion(), errorMsg);
             throw new PersistenciaImportacionException(
-                    "Error persistiendo periodo " + command.periodo() + ": " + e.getMessage(), e);
+                    "Error persistiendo periodo " + command.mesCorte() + ": " + e.getMessage(), e);
         }
     }
 
