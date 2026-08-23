@@ -1,4 +1,9 @@
-package app.apaf.backend.features.cartera_management.importacionhistorica;
+package app.apaf.backend.features.cartera_management.importacionhistorica.services;
+
+import app.apaf.backend.features.cartera_management.importacionhistorica.commands.*;
+import app.apaf.backend.features.cartera_management.importacionhistorica.dto.*;
+import app.apaf.backend.features.cartera_management.importacionhistorica.domain.*;
+import app.apaf.backend.features.cartera_management.importacionhistorica.repository.*;
 
 import app.apaf.backend.domain.cartera.calculo.CarteraCalculationService;
 import app.apaf.backend.domain.cartera.entity.CarteraDatos;
@@ -27,8 +32,10 @@ public class PersistirCarteraMensualService {
     private final EntityManager entityManager;
     private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
-    private final app.apaf.backend.features.cartera_management.importacionhistorica.events.CarteraImportadaEvent publishCarteraImportadaEvent(ImportarCarteraHistoricaCommand command) {
-        return new app.apaf.backend.features.cartera_management.importacionhistorica.events.CarteraImportadaEvent(this, command.mesCorte());
+    private final app.apaf.backend.features.cartera_management.importacionhistorica.events.CarteraImportadaEvent publishCarteraImportadaEvent(
+            ImportarCarteraHistoricaCommand command) {
+        return new app.apaf.backend.features.cartera_management.importacionhistorica.events.CarteraImportadaEvent(this,
+                command.mesCorte());
     }
 
     @Transactional
@@ -41,7 +48,7 @@ public class PersistirCarteraMensualService {
             if (rows == null || rows.isEmpty()) {
                 throw new IllegalStateException("No hay datos asociados para persistir.");
             }
-            
+
             List<CarteraDatos> batchBase = new ArrayList<>();
             int totalInsertadas = 0;
             LocalDate fechaCorteAnterior = command.mesCorte().minusMonths(1).atEndOfMonth();
