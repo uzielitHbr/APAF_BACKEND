@@ -5,6 +5,8 @@ import app.apaf.backend.features.risk_management.domain.entity.*;
 import app.apaf.backend.features.risk_management.domain.repository.RiesgoLimiteRepository;
 import app.apaf.backend.features.risk_management.domain.repository.RiesgoLimiteVersionRepository;
 import app.apaf.backend.features.risk_management.domain.exception.RiesgoExceptions;
+import app.apaf.backend.domain.users.repository.UserRepository;
+import app.apaf.backend.domain.users.User;
 import app.apaf.backend.features.risk_management.shared.RiesgoLimiteActionResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,46 +17,55 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 public class ReactivarLimiteRiesgoHandler {
     private final RiesgoLimiteRepository limiteRepository;
     private final RiesgoLimiteVersionRepository versionRepository;
+    private final UserRepository userRepository;
 
-    public ReactivarLimiteRiesgoHandler(RiesgoLimiteRepository limiteRepository, RiesgoLimiteVersionRepository versionRepository) {
+    public ReactivarLimiteRiesgoHandler(RiesgoLimiteRepository limiteRepository,
+            RiesgoLimiteVersionRepository versionRepository, UserRepository userRepository) {
         this.limiteRepository = limiteRepository;
         this.versionRepository = versionRepository;
+        this.userRepository = userRepository;
     }
 
     @Transactional
     public RiesgoLimiteActionResponse handle(UUID idLimite, ReactivarLimiteRiesgoCommand command, String actor) {
-        if (command.getLimiteEstablecidoPorcentaje() == null || command.getLimiteEstablecidoPorcentaje().compareTo(java.math.BigDecimal.ZERO) < 0 || command.getLimiteEstablecidoPorcentaje().compareTo(new java.math.BigDecimal("100")) > 0) {
+        User user = userRepository.findByEmail(actor)
+                .orElseThrow(() -> new RiesgoExceptions.DatosInconsistentesException("Usuario no encontrado"));
+        Long realizadoPor = user.getIdUser();
+        String actorReal = user.getFullName();
+        if (command.getLimiteEstablecidoPorcentaje() == null
+                || command.getLimiteEstablecidoPorcentaje().compareTo(java.math.BigDecimal.ZERO) < 0
+                || command.getLimiteEstablecidoPorcentaje().compareTo(new java.math.BigDecimal("100")) > 0) {
             throw new RiesgoExceptions.LimiteInvalidoException("Porcentaje fuera de 0-100");
         }
-        
+
         try {
             RiesgoLimiteEntity limite = limiteRepository.findById(idLimite)
-                .orElseThrow(() -> new RiesgoExceptions.LimiteNoEncontradoException("Limite inexistente"));
-            
+                    .orElseThrow(() -> new RiesgoExceptions.LimiteNoEncontradoException("Limite inexistente"));
+
             RiesgoLimiteVersionEntity actualVersion = versionRepository.findByRiesgoLimiteAndVigenteHastaIsNull(limite)
-                .orElseThrow(() -> new RiesgoExceptions.DatosInconsistentesException("No hay version activa"));
-                
+                    .orElseThrow(() -> new RiesgoExceptions.DatosInconsistentesException("No hay version activa"));
+
             actualVersion.closeVersion();
             versionRepository.save(actualVersion);
-            
+
             limite.markUpdated();
             limiteRepository.save(limite);
-            
+
             TipoLimite tipo;
             try {
                 tipo = TipoLimite.valueOf(command.getTipoLimite().toUpperCase());
             } catch (Exception e) {
                 throw new RiesgoExceptions.ParametroInvalidoException("Tipo limite invalido");
             }
-            
+
             Integer newVersionNum = actualVersion.getNumeroVersion() + 1;
-            
+
             RiesgoLimiteVersionEntity newVersion = new RiesgoLimiteVersionEntity(
-                limite, newVersionNum, tipo, command.getLimiteEstablecidoPorcentaje(), true, AccionLimite.REACTIVACION, 
-                null, actor, "USUARIO"
-            );
+                    limite, newVersionNum, tipo, command.getLimiteEstablecidoPorcentaje(), true,
+                    AccionLimite.REACTIVACION,
+                    realizadoPor, actorReal, "USUARIO");
             versionRepository.save(newVersion);
-            
+
             RiesgoLimiteActionResponse resp = new RiesgoLimiteActionResponse();
             resp.setIdLimite(limite.getIdLimite());
             resp.setNumeroVersion(newVersionNum);

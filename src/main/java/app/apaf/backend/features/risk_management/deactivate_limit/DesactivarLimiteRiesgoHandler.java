@@ -3,6 +3,8 @@ package app.apaf.backend.features.risk_management.deactivate_limit;
 import app.apaf.backend.features.risk_management.domain.repository.RiesgoLimiteRepository;
 import app.apaf.backend.features.risk_management.domain.repository.RiesgoLimiteVersionRepository;
 import app.apaf.backend.features.risk_management.domain.exception.RiesgoExceptions;
+import app.apaf.backend.domain.users.repository.UserRepository;
+import app.apaf.backend.domain.users.User;
 import app.apaf.backend.features.risk_management.shared.RiesgoLimiteActionResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,15 +18,21 @@ import app.apaf.backend.features.risk_management.domain.AccionLimite;
 public class DesactivarLimiteRiesgoHandler {
     private final RiesgoLimiteRepository limiteRepository;
     private final RiesgoLimiteVersionRepository versionRepository;
+    private final UserRepository userRepository;
 
     public DesactivarLimiteRiesgoHandler(RiesgoLimiteRepository limiteRepository,
-            RiesgoLimiteVersionRepository versionRepository) {
+            RiesgoLimiteVersionRepository versionRepository, UserRepository userRepository) {
         this.limiteRepository = limiteRepository;
         this.versionRepository = versionRepository;
+        this.userRepository = userRepository;
     }
 
     @Transactional
     public RiesgoLimiteActionResponse handle(UUID idLimite, DesactivarLimiteRiesgoCommand command, String actor) {
+        User user = userRepository.findByEmail(actor)
+                .orElseThrow(() -> new RiesgoExceptions.DatosInconsistentesException("Usuario no encontrado"));
+        Long realizadoPor = user.getIdUser();
+        String actorReal = user.getFullName();
         try {
             RiesgoLimiteEntity limite = limiteRepository.findById(idLimite)
                     .orElseThrow(() -> new RiesgoExceptions.LimiteNoEncontradoException("Limite inexistente"));
@@ -43,7 +51,7 @@ public class DesactivarLimiteRiesgoHandler {
             RiesgoLimiteVersionEntity newVersion = new RiesgoLimiteVersionEntity(
                     limite, newVersionNum, actualVersion.getTipoLimite(), actualVersion.getLimitePorcentaje(), false,
                     AccionLimite.DESACTIVACION,
-                    null, actor, "USUARIO");
+                    realizadoPor, actorReal, "USUARIO");
             versionRepository.save(newVersion);
 
             RiesgoLimiteActionResponse resp = new RiesgoLimiteActionResponse();

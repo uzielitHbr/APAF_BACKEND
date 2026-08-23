@@ -4,6 +4,8 @@ import app.apaf.backend.features.risk_management.domain.*;
 import app.apaf.backend.features.risk_management.domain.repository.RiesgoLimiteRepository;
 import app.apaf.backend.features.risk_management.domain.repository.RiesgoLimiteVersionRepository;
 import app.apaf.backend.features.risk_management.domain.exception.RiesgoExceptions;
+import app.apaf.backend.domain.users.repository.UserRepository;
+import app.apaf.backend.domain.users.User;
 import app.apaf.backend.features.risk_management.shared.RiesgoLimiteActionResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,15 +19,21 @@ import app.apaf.backend.features.risk_management.domain.entity.RiesgoLimiteVersi
 public class ActualizarLimiteRiesgoHandler {
     private final RiesgoLimiteRepository limiteRepository;
     private final RiesgoLimiteVersionRepository versionRepository;
+    private final UserRepository userRepository;
 
     public ActualizarLimiteRiesgoHandler(RiesgoLimiteRepository limiteRepository,
-            RiesgoLimiteVersionRepository versionRepository) {
+            RiesgoLimiteVersionRepository versionRepository, UserRepository userRepository) {
         this.limiteRepository = limiteRepository;
         this.versionRepository = versionRepository;
+        this.userRepository = userRepository;
     }
 
     @Transactional
     public RiesgoLimiteActionResponse handle(UUID idLimite, ActualizarLimiteRiesgoCommand command, String actor) {
+        User user = userRepository.findByEmail(actor)
+                .orElseThrow(() -> new RiesgoExceptions.DatosInconsistentesException("Usuario no encontrado"));
+        Long realizadoPor = user.getIdUser();
+        String actorReal = user.getFullName();
         if (command.getLimiteEstablecidoPorcentaje() == null
                 || command.getLimiteEstablecidoPorcentaje().compareTo(java.math.BigDecimal.ZERO) < 0
                 || command.getLimiteEstablecidoPorcentaje().compareTo(new java.math.BigDecimal("100")) > 0) {
@@ -57,7 +65,7 @@ public class ActualizarLimiteRiesgoHandler {
             RiesgoLimiteVersionEntity newVersion = new RiesgoLimiteVersionEntity(
                     limite, newVersionNum, tipo, command.getLimiteEstablecidoPorcentaje(), true,
                     AccionLimite.ACTUALIZACION,
-                    null, actor, "USUARIO");
+                    realizadoPor, actorReal, "USUARIO");
             versionRepository.save(newVersion);
 
             RiesgoLimiteActionResponse resp = new RiesgoLimiteActionResponse();

@@ -5,6 +5,8 @@ import app.apaf.backend.features.risk_management.domain.entity.RiesgoLimiteVersi
 import app.apaf.backend.features.risk_management.domain.repository.RiesgoLimiteRepository;
 import app.apaf.backend.features.risk_management.domain.repository.RiesgoLimiteVersionRepository;
 import app.apaf.backend.features.risk_management.domain.exception.RiesgoExceptions;
+import app.apaf.backend.domain.users.repository.UserRepository;
+import app.apaf.backend.domain.users.User;
 import app.apaf.backend.features.risk_management.shared.RiesgoLimiteActionResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,11 +20,13 @@ import app.apaf.backend.features.risk_management.domain.TipoLimite;
 public class CrearLimiteRiesgoHandler {
     private final RiesgoLimiteRepository limiteRepository;
     private final RiesgoLimiteVersionRepository versionRepository;
+    private final UserRepository userRepository;
 
     public CrearLimiteRiesgoHandler(RiesgoLimiteRepository limiteRepository,
-            RiesgoLimiteVersionRepository versionRepository) {
+            RiesgoLimiteVersionRepository versionRepository, UserRepository userRepository) {
         this.limiteRepository = limiteRepository;
         this.versionRepository = versionRepository;
+        this.userRepository = userRepository;
     }
 
     private String normalizarClave(String clave) {
@@ -35,6 +39,9 @@ public class CrearLimiteRiesgoHandler {
 
     @Transactional
     public RiesgoLimiteActionResponse handle(CrearLimiteRiesgoCommand command, String actor) {
+        User user = userRepository.findByEmail(actor).orElseThrow(() -> new RiesgoExceptions.DatosInconsistentesException(\"Usuario no encontrado\"));
+        Long realizadoPor = user.getIdUser();
+        String actorReal = user.getFullName();
         if (command.getLimiteEstablecidoPorcentaje() == null
                 || command.getLimiteEstablecidoPorcentaje().compareTo(java.math.BigDecimal.ZERO) < 0
                 || command.getLimiteEstablecidoPorcentaje().compareTo(new java.math.BigDecimal("100")) > 0) {
@@ -67,7 +74,7 @@ public class CrearLimiteRiesgoHandler {
 
         RiesgoLimiteVersionEntity version = new RiesgoLimiteVersionEntity(
                 limite, 1, tipo, command.getLimiteEstablecidoPorcentaje(), true, AccionLimite.CREACION,
-                null, actor, "USUARIO");
+                realizadoPor, actorReal, \"USUARIO\");
         versionRepository.save(version);
 
         RiesgoLimiteActionResponse resp = new RiesgoLimiteActionResponse();
