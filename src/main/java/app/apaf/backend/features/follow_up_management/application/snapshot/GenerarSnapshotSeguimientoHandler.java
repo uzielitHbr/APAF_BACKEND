@@ -31,10 +31,10 @@ public class GenerarSnapshotSeguimientoHandler {
     private final JdbcTemplate jdbcTemplate;
 
     public GenerarSnapshotSeguimientoHandler(SeguimientoEjecucionRepository ejecucionRepository,
-                                             SeguimientoSaldoRepository saldoRepository,
-                                             SeguimientoMorosidadRepository morosidadRepository,
-                                             SeguimientoPlazoRepository plazoRepository,
-                                             JdbcTemplate jdbcTemplate) {
+            SeguimientoSaldoRepository saldoRepository,
+            SeguimientoMorosidadRepository morosidadRepository,
+            SeguimientoPlazoRepository plazoRepository,
+            JdbcTemplate jdbcTemplate) {
         this.ejecucionRepository = ejecucionRepository;
         this.saldoRepository = saldoRepository;
         this.morosidadRepository = morosidadRepository;
@@ -50,32 +50,32 @@ public class GenerarSnapshotSeguimientoHandler {
         }
 
         String baseQuery = """
-            SELECT 
-                %s,
-                COUNT(cd.id_analisis_mensual) as num_creditos,
-                COALESCE(SUM(cd.capital_vigente), 0) as capital_vigente,
-                COALESCE(SUM(cd.int_dev_no_cobrados_vigentes), 0) as int_vigente,
-                COALESCE(SUM(cd.capital_vencido), 0) as capital_vencido,
-                COALESCE(SUM(cd.int_dev_no_cobrados_vencidos), 0) as int_vencido,
-                COALESCE(SUM(cd.int_dev_no_cobrados_ctas_orden), 0) as cuentas_orden,
-                COALESCE(SUM(cdc.cartera_total), 0) as saldo_total,
-                SUM(CASE WHEN cdc.recuperacion_en_el_mes_capital > 0 OR cdc.recuperacion_en_el_mes_intereses > 0 THEN 1 ELSE 0 END) as con_movimiento,
-                SUM(CASE WHEN COALESCE(cdc.recuperacion_en_el_mes_capital, 0) = 0 AND COALESCE(cdc.recuperacion_en_el_mes_intereses, 0) = 0 THEN 1 ELSE 0 END) as sin_movimiento,
-                SUM(CASE WHEN DATE_TRUNC('month', cd.fecha_otorgamiento) = cd.mes_corte THEN 1 ELSE 0 END) as otorgados_mes,
-                SUM(CASE WHEN cd.dias_mora BETWEEN 61 AND 89 THEN cd.capital_vigente + cd.int_dev_no_cobrados_vigentes ELSE 0 END) as cartera_en_riesgo
-            FROM cartera_datos cd
-            JOIN cartera_datos_calculados cdc ON cd.id_analisis_mensual = cdc.id_analisis_mensual
-            WHERE cd.mes_corte = ?
-            GROUP BY %s
-        """;
+                    SELECT
+                        %s,
+                        COUNT(cd.id_analisis_mensual) as num_creditos,
+                        COALESCE(SUM(cd.capital_vigente), 0) as capital_vigente,
+                        COALESCE(SUM(cd.int_dev_no_cobrados_vigentes), 0) as int_vigente,
+                        COALESCE(SUM(cd.capital_vencido), 0) as capital_vencido,
+                        COALESCE(SUM(cd.int_dev_no_cobrados_vencidos), 0) as int_vencido,
+                        COALESCE(SUM(cd.int_dev_no_cobrados_ctas_orden), 0) as cuentas_orden,
+                        COALESCE(SUM(cdc.cartera_total), 0) as saldo_total,
+                        SUM(CASE WHEN DATE_TRUNC('month', cd.fecha_otorgamiento) != cd.mes_corte AND COALESCE(cdc.recuperacion_en_el_mes_capital, 0) > 0 THEN 1 ELSE 0 END) as con_movimiento,
+                        SUM(CASE WHEN DATE_TRUNC('month', cd.fecha_otorgamiento) != cd.mes_corte AND COALESCE(cdc.recuperacion_en_el_mes_capital, 0) <= 0 THEN 1 ELSE 0 END) as sin_movimiento,
+                        SUM(CASE WHEN DATE_TRUNC('month', cd.fecha_otorgamiento) = cd.mes_corte THEN 1 ELSE 0 END) as otorgados_mes,
+                        SUM(CASE WHEN cd.dias_mora BETWEEN 61 AND 89 AND cd.capital_vigente > 0 THEN cd.capital_vigente + cd.int_dev_no_cobrados_vigentes ELSE 0 END) as cartera_en_riesgo
+                    FROM cartera_datos cd
+                    JOIN cartera_datos_calculados cdc ON cd.id_analisis_mensual = cdc.id_analisis_mensual
+                    WHERE cd.mes_corte = ?
+                    GROUP BY %s
+                """;
 
         // 1. SALDO
         String querySaldo = String.format(baseQuery, "cd.sucursal as agrupacion", "cd.sucursal");
         List<Map<String, Object>> saldoRows = jdbcTemplate.queryForList(querySaldo, fecha);
 
         BigDecimal carteraTotalGlobal = saldoRows.stream()
-            .map(row -> (BigDecimal) row.get("saldo_total"))
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .map(row -> (BigDecimal) row.get("saldo_total"))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         int numCreditosGlobal = 0;
         BigDecimal capitalVigenteGlobal = BigDecimal.ZERO;
@@ -97,41 +97,51 @@ public class GenerarSnapshotSeguimientoHandler {
             BigDecimal enRiesgoSuc = (BigDecimal) row.get("cartera_en_riesgo");
 
             // Proporcion Cartera: (sucursal.saldoTotal / totales.saldoTotal) * 100
-            BigDecimal proporcion = carteraTotalGlobal.compareTo(BigDecimal.ZERO) > 0 ?
-                saldoSuc.divide(carteraTotalGlobal, 8, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(4, RoundingMode.HALF_UP) : BigDecimal.ZERO;
-            
-            // IMOR Sucursal: ((sucursal.capitalVencido + sucursal.interesOrdVencido) / sucursal.saldoTotal) * 100
-            BigDecimal imorSuc = saldoSuc.compareTo(BigDecimal.ZERO) > 0 ?
-                carteraVencidaSuc.divide(saldoSuc, 8, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(4, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+            BigDecimal proporcion = carteraTotalGlobal.compareTo(BigDecimal.ZERO) > 0
+                    ? saldoSuc.divide(carteraTotalGlobal, 8, RoundingMode.HALF_UP).multiply(new BigDecimal("100"))
+                            .setScale(4, RoundingMode.HALF_UP)
+                    : BigDecimal.ZERO;
 
-            // IMOR General (Contribucion): ((sucursal.capitalVencido + sucursal.interesOrdVencido) / totales.saldoTotal) * 100
-            BigDecimal imorGeneralContrib = carteraTotalGlobal.compareTo(BigDecimal.ZERO) > 0 ?
-                carteraVencidaSuc.divide(carteraTotalGlobal, 8, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(4, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+            // IMOR Sucursal: ((sucursal.capitalVencido + sucursal.interesOrdVencido) /
+            // sucursal.saldoTotal) * 100
+            BigDecimal imorSuc = saldoSuc.compareTo(BigDecimal.ZERO) > 0
+                    ? carteraVencidaSuc.divide(saldoSuc, 8, RoundingMode.HALF_UP).multiply(new BigDecimal("100"))
+                            .setScale(4, RoundingMode.HALF_UP)
+                    : BigDecimal.ZERO;
 
-            // IMOR Proyectado: ((sucursal.capitalVencido + sucursal.interesOrdVencido + carteraEnRiesgo) / sucursal.saldoTotal) * 100
-            // TODO: Se suma la carteraEnRiesgo obtenida de dias_mora 61 a 89 (capital_vigente + int_vigente). Verificar con exactitud contable si falta algún otro rubro.
-            BigDecimal imorProyectado = saldoSuc.compareTo(BigDecimal.ZERO) > 0 ?
-                carteraVencidaSuc.add(enRiesgoSuc).divide(saldoSuc, 8, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(4, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+            // IMOR General (Contribucion): ((sucursal.capitalVencido +
+            // sucursal.interesOrdVencido) / totales.saldoTotal) * 100
+            BigDecimal imorGeneralContrib = carteraTotalGlobal.compareTo(BigDecimal.ZERO) > 0
+                    ? carteraVencidaSuc.divide(carteraTotalGlobal, 8, RoundingMode.HALF_UP)
+                            .multiply(new BigDecimal("100")).setScale(4, RoundingMode.HALF_UP)
+                    : BigDecimal.ZERO;
+
+            // IMOR Proyectado: ((sucursal.capitalVencido + sucursal.interesOrdVencido +
+            // carteraEnRiesgo) / sucursal.saldoTotal) * 100
+            BigDecimal imorProyectado = saldoSuc.compareTo(BigDecimal.ZERO) > 0
+                    ? carteraVencidaSuc.add(enRiesgoSuc).divide(saldoSuc, 8, RoundingMode.HALF_UP)
+                            .multiply(new BigDecimal("100")).setScale(4, RoundingMode.HALF_UP)
+                    : BigDecimal.ZERO;
 
             saldos.add(SeguimientoSaldoEntity.builder()
-                .mesCorte(fecha)
-                .sucursal((String) row.get("agrupacion"))
-                .numeroCreditos(((Number) row.get("num_creditos")).intValue())
-                .capitalVigente((BigDecimal) row.get("capital_vigente"))
-                .interesOrdVigente((BigDecimal) row.get("int_vigente"))
-                .capitalVencido(cvSuc)
-                .interesOrdVencido(ivSuc)
-                .cuentasOrden((BigDecimal) row.get("cuentas_orden"))
-                .saldoTotal(saldoSuc)
-                .creditosConMovimiento(((Number) row.get("con_movimiento")).intValue())
-                .creditosSinMovimiento(((Number) row.get("sin_movimiento")).intValue())
-                .creditosOtorgadosMes(((Number) row.get("otorgados_mes")).intValue())
-                .imorGeneral(imorGeneralContrib)
-                .proporcionCartera(proporcion)
-                .imorSucursal(imorSuc)
-                .imorProyectado(imorProyectado) 
-                .esTotal(false)
-                .build());
+                    .mesCorte(fecha)
+                    .sucursal((String) row.get("agrupacion"))
+                    .numeroCreditos(((Number) row.get("num_creditos")).intValue())
+                    .capitalVigente((BigDecimal) row.get("capital_vigente"))
+                    .interesOrdVigente((BigDecimal) row.get("int_vigente"))
+                    .capitalVencido(cvSuc)
+                    .interesOrdVencido(ivSuc)
+                    .cuentasOrden((BigDecimal) row.get("cuentas_orden"))
+                    .saldoTotal(saldoSuc)
+                    .creditosConMovimiento(((Number) row.get("con_movimiento")).intValue())
+                    .creditosSinMovimiento(((Number) row.get("sin_movimiento")).intValue())
+                    .creditosOtorgadosMes(((Number) row.get("otorgados_mes")).intValue())
+                    .imorGeneral(imorGeneralContrib)
+                    .proporcionCartera(proporcion)
+                    .imorSucursal(imorSuc)
+                    .imorProyectado(imorProyectado)
+                    .esTotal(false)
+                    .build());
 
             numCreditosGlobal += ((Number) row.get("num_creditos")).intValue();
             capitalVigenteGlobal = capitalVigenteGlobal.add((BigDecimal) row.get("capital_vigente"));
@@ -146,160 +156,176 @@ public class GenerarSnapshotSeguimientoHandler {
         }
 
         BigDecimal carteraVencidaGlobal = capitalVencidoGlobal.add(intVencidoGlobal);
-        BigDecimal imorGeneralGlobal = carteraTotalGlobal.compareTo(BigDecimal.ZERO) > 0 ? 
-            carteraVencidaGlobal.divide(carteraTotalGlobal, 8, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(4, RoundingMode.HALF_UP) : BigDecimal.ZERO;
-        
-        BigDecimal imorProyectadoGlobal = carteraTotalGlobal.compareTo(BigDecimal.ZERO) > 0 ?
-            carteraVencidaGlobal.add(carteraEnRiesgoGlobal).divide(carteraTotalGlobal, 8, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(4, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+        BigDecimal imorGeneralGlobal = carteraTotalGlobal.compareTo(BigDecimal.ZERO) > 0
+                ? carteraVencidaGlobal.divide(carteraTotalGlobal, 8, RoundingMode.HALF_UP)
+                        .multiply(new BigDecimal("100")).setScale(4, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+
+        BigDecimal imorProyectadoGlobal = carteraTotalGlobal.compareTo(BigDecimal.ZERO) > 0
+                ? carteraVencidaGlobal.add(carteraEnRiesgoGlobal).divide(carteraTotalGlobal, 8, RoundingMode.HALF_UP)
+                        .multiply(new BigDecimal("100")).setScale(4, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
 
         saldos.add(SeguimientoSaldoEntity.builder()
-            .mesCorte(fecha)
-            .sucursal("TOTAL")
-            .numeroCreditos(numCreditosGlobal)
-            .capitalVigente(capitalVigenteGlobal)
-            .interesOrdVigente(intVigenteGlobal)
-            .capitalVencido(capitalVencidoGlobal)
-            .interesOrdVencido(intVencidoGlobal) 
-            .cuentasOrden(cuentasOrdenGlobal)
-            .saldoTotal(carteraTotalGlobal)
-            .creditosConMovimiento(conMovGlobal)
-            .creditosSinMovimiento(sinMovGlobal)
-            .creditosOtorgadosMes(otorgadosGlobal)
-            .imorGeneral(imorGeneralGlobal)
-            .proporcionCartera(new BigDecimal("100.0000"))
-            .imorSucursal(imorGeneralGlobal)
-            .imorProyectado(imorProyectadoGlobal)
-            .esTotal(true)
-            .build());
+                .mesCorte(fecha)
+                .sucursal("TOTAL")
+                .numeroCreditos(numCreditosGlobal)
+                .capitalVigente(capitalVigenteGlobal)
+                .interesOrdVigente(intVigenteGlobal)
+                .capitalVencido(capitalVencidoGlobal)
+                .interesOrdVencido(intVencidoGlobal)
+                .cuentasOrden(cuentasOrdenGlobal)
+                .saldoTotal(carteraTotalGlobal)
+                .creditosConMovimiento(conMovGlobal)
+                .creditosSinMovimiento(sinMovGlobal)
+                .creditosOtorgadosMes(otorgadosGlobal)
+                .imorGeneral(imorGeneralGlobal)
+                .proporcionCartera(new BigDecimal("100.0000"))
+                .imorSucursal(imorGeneralGlobal)
+                .imorProyectado(imorProyectadoGlobal)
+                .esTotal(true)
+                .build());
 
         saldoRepository.saveAll(saldos);
 
         // 2. MOROSIDAD
-        String baseQueryMorosidad = baseQuery.replace("WHERE cd.mes_corte = ?", "WHERE cd.mes_corte = ? AND cd.capital_vigente > 0");
+        String baseQueryMorosidad = baseQuery.replace("WHERE cd.mes_corte = ?",
+                "WHERE cd.mes_corte = ? AND cd.capital_vigente > 0");
         String morosidadAgrupacion = """
-            cd.sucursal, 
-            CASE 
-                WHEN cd.dias_mora BETWEEN 1 AND 29 THEN '1a29'
-                WHEN cd.dias_mora BETWEEN 30 AND 60 THEN '30a60'
-                WHEN cd.dias_mora BETWEEN 61 AND 89 THEN '61a89'
-                ELSE 'OTRO'
-            END as rango_mora
-        """;
+                    cd.sucursal,
+                    CASE
+                        WHEN cd.dias_mora BETWEEN 1 AND 29 THEN '1a29'
+                        WHEN cd.dias_mora BETWEEN 30 AND 60 THEN '30a60'
+                        WHEN cd.dias_mora BETWEEN 61 AND 89 THEN '61a89'
+                        ELSE 'OTRO'
+                    END as rango_mora
+                """;
         String queryMorosidad = String.format(baseQueryMorosidad, morosidadAgrupacion, "cd.sucursal, rango_mora");
         List<Map<String, Object>> morosidadRows = jdbcTemplate.queryForList(queryMorosidad, fecha);
-        
+
         List<SeguimientoMorosidadEntity> morosidades = new ArrayList<>();
         for (Map<String, Object> row : morosidadRows) {
             String rango = (String) row.get("rango_mora");
-            if ("OTRO".equals(rango)) continue;
+            if ("OTRO".equals(rango))
+                continue;
 
             BigDecimal capVig = (BigDecimal) row.get("capital_vigente");
             BigDecimal intVig = (BigDecimal) row.get("int_vigente");
             BigDecimal saldoTotalLocal = capVig.add(intVig);
 
             morosidades.add(SeguimientoMorosidadEntity.builder()
-                .mesCorte(fecha)
-                .sucursal((String) row.get("sucursal"))
-                .rangoMora(rango)
-                .numeroCreditos(((Number) row.get("num_creditos")).intValue())
-                .capitalVigente(capVig)
-                .interesOrdVigente(intVig)
-                .capitalVencido(BigDecimal.ZERO)
-                .interesOrdVencido(BigDecimal.ZERO)
-                .cuentasOrden(BigDecimal.ZERO)
-                .saldoTotal(saldoTotalLocal)
-                .creditosConMovimiento(((Number) row.get("con_movimiento")).intValue())
-                .creditosSinMovimiento(((Number) row.get("sin_movimiento")).intValue())
-                .creditosOtorgadosMes(((Number) row.get("otorgados_mes")).intValue())
-                .build());
+                    .mesCorte(fecha)
+                    .sucursal((String) row.get("sucursal"))
+                    .rangoMora(rango)
+                    .numeroCreditos(((Number) row.get("num_creditos")).intValue())
+                    .capitalVigente(capVig)
+                    .interesOrdVigente(intVig)
+                    .capitalVencido(BigDecimal.ZERO)
+                    .interesOrdVencido(BigDecimal.ZERO)
+                    .cuentasOrden(BigDecimal.ZERO)
+                    .saldoTotal(saldoTotalLocal)
+                    .creditosConMovimiento(((Number) row.get("con_movimiento")).intValue())
+                    .creditosSinMovimiento(((Number) row.get("sin_movimiento")).intValue())
+                    .creditosOtorgadosMes(((Number) row.get("otorgados_mes")).intValue())
+                    .build());
         }
         morosidadRepository.saveAll(morosidades);
 
         // 3. PLAZO
         String plazoBucket = """
-            CASE 
-                WHEN cd.fecha_vencimiento <= (cd.mes_corte + INTERVAL '1 year') THEN '1 Año'
-                WHEN cd.fecha_vencimiento <= (cd.mes_corte + INTERVAL '2 years') THEN '2 Años'
-                WHEN cd.fecha_vencimiento <= (cd.mes_corte + INTERVAL '3 years') THEN '3 Años'
-                WHEN cd.fecha_vencimiento <= (cd.mes_corte + INTERVAL '4 years') THEN '4 Años'
-                WHEN cd.fecha_vencimiento <= (cd.mes_corte + INTERVAL '5 years') THEN '5 Años'
-                WHEN cd.fecha_vencimiento <= (cd.mes_corte + INTERVAL '6 years') THEN '6 Años'
-                WHEN cd.fecha_vencimiento <= (cd.mes_corte + INTERVAL '7 years') THEN '7 Años'
-                ELSE '8 Años'
-            END""";
+                CASE
+                    WHEN cd.fecha_vencimiento <= (cd.mes_corte + INTERVAL '1 year') THEN '1 Año'
+                    WHEN cd.fecha_vencimiento <= (cd.mes_corte + INTERVAL '2 years') THEN '2 Años'
+                    WHEN cd.fecha_vencimiento <= (cd.mes_corte + INTERVAL '3 years') THEN '3 Años'
+                    WHEN cd.fecha_vencimiento <= (cd.mes_corte + INTERVAL '4 years') THEN '4 Años'
+                    WHEN cd.fecha_vencimiento <= (cd.mes_corte + INTERVAL '5 years') THEN '5 Años'
+                    WHEN cd.fecha_vencimiento <= (cd.mes_corte + INTERVAL '6 years') THEN '6 Años'
+                    WHEN cd.fecha_vencimiento <= (cd.mes_corte + INTERVAL '7 years') THEN '7 Años'
+                    ELSE '8 Años'
+                END""";
 
         String plazoAgrupacion = "cd.sucursal,\n" + plazoBucket + " as plazo_remanente";
         String queryPlazo = String.format(baseQuery, plazoAgrupacion, "cd.sucursal, " + plazoBucket);
         List<Map<String, Object>> plazoRows = jdbcTemplate.queryForList(queryPlazo, fecha);
-        
+
         List<SeguimientoPlazoEntity> plazos = new ArrayList<>();
         for (Map<String, Object> row : plazoRows) {
             String plazoRem = (String) row.get("plazo_remanente");
-            if (plazoRem == null) plazoRem = "Desconocido";
+            if (plazoRem == null)
+                plazoRem = "Desconocido";
 
             BigDecimal saldoPlazo = (BigDecimal) row.get("saldo_total");
             BigDecimal cvPlazo = (BigDecimal) row.get("capital_vencido");
             BigDecimal ivPlazo = (BigDecimal) row.get("int_vencido");
-            BigDecimal proporcion = carteraTotalGlobal.compareTo(BigDecimal.ZERO) > 0 ?
-                saldoPlazo.divide(carteraTotalGlobal, 8, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(4, RoundingMode.HALF_UP) : BigDecimal.ZERO;
-            BigDecimal imorPlazo = saldoPlazo.compareTo(BigDecimal.ZERO) > 0 ?
-                cvPlazo.add(ivPlazo).divide(saldoPlazo, 8, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(4, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+            BigDecimal proporcion = carteraTotalGlobal.compareTo(BigDecimal.ZERO) > 0
+                    ? saldoPlazo.divide(carteraTotalGlobal, 8, RoundingMode.HALF_UP).multiply(new BigDecimal("100"))
+                            .setScale(4, RoundingMode.HALF_UP)
+                    : BigDecimal.ZERO;
+            BigDecimal imorPlazo = saldoPlazo.compareTo(BigDecimal.ZERO) > 0
+                    ? cvPlazo.add(ivPlazo).divide(saldoPlazo, 8, RoundingMode.HALF_UP).multiply(new BigDecimal("100"))
+                            .setScale(4, RoundingMode.HALF_UP)
+                    : BigDecimal.ZERO;
 
             plazos.add(SeguimientoPlazoEntity.builder()
-                .mesCorte(fecha)
-                .sucursal((String) row.get("sucursal"))
-                .tipoVista("SUCURSAL")
-                .plazoRemanente(plazoRem)
-                .numeroCreditos(((Number) row.get("num_creditos")).intValue())
-                .capitalVigente((BigDecimal) row.get("capital_vigente"))
-                .interesOrdVigente((BigDecimal) row.get("int_vigente"))
-                .capitalVencido((BigDecimal) row.get("capital_vencido"))
-                .interesOrdVencido((BigDecimal) row.get("int_vencido"))
-                .cuentasOrden((BigDecimal) row.get("cuentas_orden"))
-                .saldoTotal(saldoPlazo)
-                .creditosConMovimiento(((Number) row.get("con_movimiento")).intValue())
-                .creditosSinMovimiento(((Number) row.get("sin_movimiento")).intValue())
-                .creditosOtorgadosMes(((Number) row.get("otorgados_mes")).intValue())
-                .imor(imorPlazo)
-                .proporcion(proporcion)
-                .build());
+                    .mesCorte(fecha)
+                    .sucursal((String) row.get("sucursal"))
+                    .tipoVista("SUCURSAL")
+                    .plazoRemanente(plazoRem)
+                    .numeroCreditos(((Number) row.get("num_creditos")).intValue())
+                    .capitalVigente((BigDecimal) row.get("capital_vigente"))
+                    .interesOrdVigente((BigDecimal) row.get("int_vigente"))
+                    .capitalVencido((BigDecimal) row.get("capital_vencido"))
+                    .interesOrdVencido((BigDecimal) row.get("int_vencido"))
+                    .cuentasOrden((BigDecimal) row.get("cuentas_orden"))
+                    .saldoTotal(saldoPlazo)
+                    .creditosConMovimiento(((Number) row.get("con_movimiento")).intValue())
+                    .creditosSinMovimiento(((Number) row.get("sin_movimiento")).intValue())
+                    .creditosOtorgadosMes(((Number) row.get("otorgados_mes")).intValue())
+                    .imor(imorPlazo)
+                    .proporcion(proporcion)
+                    .build());
         }
 
-        String queryPlazoConsolidado = String.format(baseQuery, 
-            plazoBucket + " as plazo_remanente", 
-            plazoBucket);
+        String queryPlazoConsolidado = String.format(baseQuery,
+                plazoBucket + " as plazo_remanente",
+                plazoBucket);
         List<Map<String, Object>> plazoConsolidadoRows = jdbcTemplate.queryForList(queryPlazoConsolidado, fecha);
-        
+
         for (Map<String, Object> row : plazoConsolidadoRows) {
             String plazoRem = (String) row.get("plazo_remanente");
-            if (plazoRem == null) plazoRem = "Desconocido";
+            if (plazoRem == null)
+                plazoRem = "Desconocido";
 
             BigDecimal saldoPlazo = (BigDecimal) row.get("saldo_total");
             BigDecimal cvPlazo = (BigDecimal) row.get("capital_vencido");
             BigDecimal ivPlazo = (BigDecimal) row.get("int_vencido");
-            BigDecimal proporcion = carteraTotalGlobal.compareTo(BigDecimal.ZERO) > 0 ?
-                saldoPlazo.divide(carteraTotalGlobal, 8, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(4, RoundingMode.HALF_UP) : BigDecimal.ZERO;
-            BigDecimal imorPlazo = saldoPlazo.compareTo(BigDecimal.ZERO) > 0 ?
-                cvPlazo.add(ivPlazo).divide(saldoPlazo, 8, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(4, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+            BigDecimal proporcion = carteraTotalGlobal.compareTo(BigDecimal.ZERO) > 0
+                    ? saldoPlazo.divide(carteraTotalGlobal, 8, RoundingMode.HALF_UP).multiply(new BigDecimal("100"))
+                            .setScale(4, RoundingMode.HALF_UP)
+                    : BigDecimal.ZERO;
+            BigDecimal imorPlazo = saldoPlazo.compareTo(BigDecimal.ZERO) > 0
+                    ? cvPlazo.add(ivPlazo).divide(saldoPlazo, 8, RoundingMode.HALF_UP).multiply(new BigDecimal("100"))
+                            .setScale(4, RoundingMode.HALF_UP)
+                    : BigDecimal.ZERO;
 
             plazos.add(SeguimientoPlazoEntity.builder()
-                .mesCorte(fecha)
-                .sucursal(null)
-                .tipoVista("CONSOLIDADO")
-                .plazoRemanente(plazoRem)
-                .numeroCreditos(((Number) row.get("num_creditos")).intValue())
-                .capitalVigente((BigDecimal) row.get("capital_vigente"))
-                .interesOrdVigente((BigDecimal) row.get("int_vigente"))
-                .capitalVencido((BigDecimal) row.get("capital_vencido"))
-                .interesOrdVencido((BigDecimal) row.get("int_vencido"))
-                .cuentasOrden((BigDecimal) row.get("cuentas_orden"))
-                .saldoTotal(saldoPlazo)
-                .creditosConMovimiento(((Number) row.get("con_movimiento")).intValue())
-                .creditosSinMovimiento(((Number) row.get("sin_movimiento")).intValue())
-                .creditosOtorgadosMes(((Number) row.get("otorgados_mes")).intValue())
-                .imor(imorPlazo)
-                .proporcion(proporcion)
-                .build());
+                    .mesCorte(fecha)
+                    .sucursal(null)
+                    .tipoVista("CONSOLIDADO")
+                    .plazoRemanente(plazoRem)
+                    .numeroCreditos(((Number) row.get("num_creditos")).intValue())
+                    .capitalVigente((BigDecimal) row.get("capital_vigente"))
+                    .interesOrdVigente((BigDecimal) row.get("int_vigente"))
+                    .capitalVencido((BigDecimal) row.get("capital_vencido"))
+                    .interesOrdVencido((BigDecimal) row.get("int_vencido"))
+                    .cuentasOrden((BigDecimal) row.get("cuentas_orden"))
+                    .saldoTotal(saldoPlazo)
+                    .creditosConMovimiento(((Number) row.get("con_movimiento")).intValue())
+                    .creditosSinMovimiento(((Number) row.get("sin_movimiento")).intValue())
+                    .creditosOtorgadosMes(((Number) row.get("otorgados_mes")).intValue())
+                    .imor(imorPlazo)
+                    .proporcion(proporcion)
+                    .build());
         }
         plazoRepository.saveAll(plazos);
 
