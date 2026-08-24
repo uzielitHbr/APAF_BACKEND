@@ -4,7 +4,7 @@ CREATE TABLE riesgo_limite (
  clave VARCHAR(160) NOT NULL,
  identificacion VARCHAR(255) NOT NULL,
  tipo_limite VARCHAR(10) NOT NULL,
- porcentaje_actual NUMERIC(7,4) NOT NULL,
+ porcentaje_actual NUMERIC(7,4) NULL, 
  activo BOOLEAN NOT NULL DEFAULT TRUE,
  fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
  fecha_actualizacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -25,7 +25,7 @@ CREATE TABLE riesgo_limite_historial (
  id_limite UUID NOT NULL,
  accion VARCHAR(20) NOT NULL,
  porcentaje_anterior NUMERIC(7,4) NULL,
- porcentaje_nuevo NUMERIC(7,4) NOT NULL,
+ porcentaje_nuevo NUMERIC(7,4) NULL,
  motivo VARCHAR(255) NULL,
  realizado_por BIGINT NULL,
  actor VARCHAR(150) NOT NULL,
@@ -64,6 +64,7 @@ JOIN cartera_datos_calculados cdc ON cdc.id_analisis_mensual = cd.id_analisis_me
 
 WITH limites (agrupacion, clave, identificacion, tipo_limite, porcentaje) AS (
     VALUES
+    -- PRODUCTOS
     ('PRODUCTO', '3101', 'Credito Ordinario', 'MAXIMO', 35.0000),
     ('PRODUCTO', '3102', 'Credito Automatico', 'MAXIMO', 10.0000),
     ('PRODUCTO', '3103', 'Auto-credito', 'MAXIMO', 40.0000),
@@ -75,16 +76,64 @@ WITH limites (agrupacion, clave, identificacion, tipo_limite, porcentaje) AS (
     ('PRODUCTO', '3129', 'Semilla', 'MAXIMO', 10.0000),
     ('PRODUCTO', '3130', 'Credito Agropecuario', 'MAXIMO', 10.0000),
     ('PRODUCTO', '3134', 'Multi-Credito', 'MAXIMO', 10.0000),
+    
+    -- MODALIDAD (Incluye la vacía)
     ('MODALIDAD', 'PAGO UNICO DE PRINCIPAL E INTERES AL VENCIMIENTO', 'Pago unico de principal e interes al vencimiento', 'MAXIMO', 2.0000),
+    ('MODALIDAD', 'PAGO UNICO DE PRINCIPAL AL VENCIMIENTO Y PAGOS PERIODICOS DE INTERES', 'Pago unico de principal al vencimiento y pagos periodicos de interes', 'MAXIMO', NULL),
     ('MODALIDAD', 'PAGOS PERIODICOS DE PRINCIPAL E INTERES', 'Pagos periodicos de principal e interes', 'MINIMO', 98.0000),
+    
+    -- ESTADOS (Incluye todos los vacíos)
+    ('ESTADO', 'BAJA CALIFORNIA', 'Baja California', 'MAXIMO', NULL),
+    ('ESTADO', 'CIUDAD DE MEXICO', 'Ciudad de Mexico', 'MAXIMO', NULL),
+    ('ESTADO', 'GUERRERO', 'Guerrero', 'MAXIMO', NULL),
+    ('ESTADO', 'HIDALGO', 'Hidalgo', 'MAXIMO', NULL),
+    ('ESTADO', 'JALISCO', 'Jalisco', 'MAXIMO', NULL),
+    ('ESTADO', 'MEXICO', 'Mexico', 'MAXIMO', NULL),
+    ('ESTADO', 'MORELOS', 'Morelos', 'MAXIMO', NULL),
+    ('ESTADO', 'NUEVO LEON', 'Nuevo Leon', 'MAXIMO', NULL),
     ('ESTADO', 'PUEBLA', 'Puebla', 'MAXIMO', 20.0000),
+    ('ESTADO', 'QUERETARO', 'Queretaro', 'MAXIMO', NULL),
+    ('ESTADO', 'SONORA', 'Sonora', 'MAXIMO', NULL),
+    ('ESTADO', 'TAMAULIPAS', 'Tamaulipas', 'MAXIMO', NULL),
+    ('ESTADO', 'TLAXCALA', 'Tlaxcala', 'MAXIMO', NULL),
     ('ESTADO', 'VERACRUZ DE IGNACIO DE LA LLAVE', 'Veracruz de Ignacio de la Llave', 'MAXIMO', 85.0000),
+    ('ESTADO', 'ZACATECAS', 'Zacatecas', 'MAXIMO', NULL),
+    ('ESTADO', 'CAROLINA DEL NORTE', 'Carolina del Norte', 'MAXIMO', NULL),
     ('ESTADO', 'OTROS', 'Otros', 'MAXIMO', 5.0000),
+    
+    -- EDAD (Todos vacíos)
+    ('EDAD', '1', '18 A 25', 'MAXIMO', NULL),
+    ('EDAD', '2', '26 A 30', 'MAXIMO', NULL),
+    ('EDAD', '3', '31 A 35', 'MAXIMO', NULL),
+    ('EDAD', '4', '36 A 40', 'MAXIMO', NULL),
+    ('EDAD', '5', '41 A 45', 'MAXIMO', NULL),
+    ('EDAD', '6', '46 A 50', 'MAXIMO', NULL),
+    ('EDAD', '7', '51 A 55', 'MAXIMO', NULL),
+    ('EDAD', '8', '56 A 60', 'MAXIMO', NULL),
+    ('EDAD', '9', '61 A 65', 'MAXIMO', NULL),
+    ('EDAD', '10', '66 A 70', 'MAXIMO', NULL),
+    ('EDAD', '11', '71 A 75', 'MAXIMO', NULL),
+    ('EDAD', '12', '76 A 80', 'MAXIMO', NULL),
+    ('EDAD', '13', '81 A 85', 'MAXIMO', NULL),
+    ('EDAD', '14', '86 A 90', 'MAXIMO', NULL),
+
+    -- GENERO (Todos vacíos)
+    ('GENERO', 'MASCULINO', 'Masculino', 'MAXIMO', NULL),
+    ('GENERO', 'FEMENINO', 'Femenino', 'MINIMO', NULL),
+
+    -- TIPO DE CARTERA / CLASIFICACION (Todos vacíos)
+    ('TIPO_CLASIFICACION', 'NUEVO', 'Nuevo', 'MAXIMO', NULL),
+    ('TIPO_CLASIFICACION', 'RENOVADO', 'Renovado', 'MAXIMO', NULL),
+    ('TIPO_CLASIFICACION', 'REESTRUCTURADO', 'Reestructurado', 'MAXIMO', NULL),
+    
+    -- SUCURSALES
     ('SUCURSAL', 'COYUTLA', 'Coyutla', 'MAXIMO', 100.0000),
     ('SUCURSAL', 'ENTABLEDERO', 'Entabledero', 'MAXIMO', 100.0000),
     ('SUCURSAL', 'COXQUIHUI', 'Coxquihui', 'MAXIMO', 100.0000),
     ('SUCURSAL', 'HUEHUETLA', 'Huehuetla', 'MAXIMO', 100.0000),
     ('SUCURSAL', 'LA UNO', 'La Uno', 'MAXIMO', 100.0000),
+    
+    -- OCUPACIONES
     ('OCUPACION', 'AGRICULTOR', 'Agricultor', 'MAXIMO', 15.0000),
     ('OCUPACION', 'ALBAÑIL', 'Albañil', 'MAXIMO', 5.0000),
     ('OCUPACION', 'AMA DE CASA', 'Ama De Casa', 'MAXIMO', 10.0000),
@@ -99,6 +148,8 @@ WITH limites (agrupacion, clave, identificacion, tipo_limite, porcentaje) AS (
     ('OCUPACION', 'TAXISTA', 'Taxista', 'MAXIMO', 5.0000),
     ('OCUPACION', 'VENDEDOR', 'Vendedor', 'MAXIMO', 5.0000),
     ('OCUPACION', 'OTROS', 'Otros', 'MAXIMO', 30.0000),
+    
+    -- MUNICIPIOS
     ('MUNICIPIO', 'CHUMATLAN', 'Chumatlan', 'MAXIMO', 5.0000),
     ('MUNICIPIO', 'COAHUITLAN', 'Coahuitlan', 'MAXIMO', 13.0000),
     ('MUNICIPIO', 'COATZINTLA', 'Coatzintla', 'MAXIMO', 3.0000),
@@ -120,11 +171,11 @@ WITH limites (agrupacion, clave, identificacion, tipo_limite, porcentaje) AS (
 inserted_limites AS (
     INSERT INTO riesgo_limite (agrupacion, clave, identificacion, tipo_limite, porcentaje_actual, activo)
     SELECT agrupacion, clave, identificacion, tipo_limite, porcentaje, TRUE FROM limites
-    RETURNING id_limite
+    RETURNING id_limite, porcentaje_actual
 )
 INSERT INTO riesgo_limite_historial (
     id_limite, accion, porcentaje_anterior, porcentaje_nuevo, motivo, actor
 )
 SELECT 
-    id_limite, 'CREACION', NULL, 0, 'Inicialización por migración', 'MIGRACION_FLYWAY'
+    id_limite, 'CREACION', NULL, porcentaje_actual, 'Inicialización por migración', 'MIGRACION_FLYWAY'
 FROM inserted_limites;

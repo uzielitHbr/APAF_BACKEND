@@ -12,18 +12,23 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OpcionesLimiteHandler {
 
-    private final RiesgoAnalisisReadRepository readRepository;
-
-    public List<OpcionLimiteDto> handle(String agrupacionStr) {
-        AgrupacionRiesgo agrupacion;
-        try {
-            agrupacion = AgrupacionRiesgo.valueOf(agrupacionStr.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new RiesgoExceptions.ParametroInvalidoException("Agrupación inválida");
-        }
-
-        List<OpcionLimiteDto> opciones = new java.util.ArrayList<>(readRepository.obtenerOpcionesDisponiblesPorAgrupacion(agrupacion));
-        
-        return opciones;
+    public List<OpcionLimiteDto> handle() {
+        return java.util.Arrays.stream(AgrupacionRiesgo.values())
+                .map(agrupacion -> {
+                    String identificacion = switch (agrupacion) {
+                        case ESTADO -> "Estado";
+                        case MUNICIPIO -> "Municipio";
+                        case SUCURSAL -> "Sucursal";
+                        case PRODUCTO -> "Producto";
+                        case EDAD -> "Rango de Edad";
+                        case GENERO -> "Género";
+                        case OCUPACION -> "Ocupación";
+                        case TIPO_CLASIFICACION -> "Tipo de Clasificación (Nuevo/Renovado)";
+                        case ACREDITADO -> "Tipo de Acreditado";
+                        case MODALIDAD -> "Modalidad de Pago";
+                    };
+                    return new OpcionLimiteDto(agrupacion.name(), identificacion);
+                })
+                .toList();
     }
 }

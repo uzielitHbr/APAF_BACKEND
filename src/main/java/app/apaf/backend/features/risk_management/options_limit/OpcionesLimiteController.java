@@ -20,8 +20,8 @@ public class OpcionesLimiteController {
 
     @GetMapping("/opciones")
     @PreAuthorize("hasAnyRole('ADMIN', 'RIESGOS')")
-    @Operation(summary = "Obtiene las opciones disponibles para una agrupacion")
-    public List<OpcionLimiteDto> obtenerOpciones(@RequestParam(required = false) String agrupacion) {
-        return handler.handle(agrupacion);
+    @Operation(summary = "Obtiene las agrupaciones principales para configurar límites")
+    public List<OpcionLimiteDto> obtenerOpciones() {
+        return handler.handle();
     }
 }
