@@ -25,7 +25,7 @@ public class ReactivarLimiteRiesgoController {
     @Operation(summary = "Reactivar un límite de riesgo")
     public RiesgoLimiteActionResponse reactivar(
             @PathVariable UUID idLimite,
-            @RequestBody ReactivarLimiteRiesgoCommand command,
+            @jakarta.validation.Valid @RequestBody ReactivarLimiteRiesgoCommand command,
             Authentication authentication) {
         return handler.handle(idLimite, command, authentication.getName());
     }
