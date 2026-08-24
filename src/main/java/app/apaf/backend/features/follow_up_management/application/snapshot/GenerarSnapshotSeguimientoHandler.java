@@ -234,13 +234,13 @@ public class GenerarSnapshotSeguimientoHandler {
         // 3. PLAZO
         String plazoBucket = """
                 CASE
-                    WHEN cd.fecha_vencimiento <= (cd.mes_corte + INTERVAL '1 year') THEN '1 Año'
-                    WHEN cd.fecha_vencimiento <= (cd.mes_corte + INTERVAL '2 years') THEN '2 Años'
-                    WHEN cd.fecha_vencimiento <= (cd.mes_corte + INTERVAL '3 years') THEN '3 Años'
-                    WHEN cd.fecha_vencimiento <= (cd.mes_corte + INTERVAL '4 years') THEN '4 Años'
-                    WHEN cd.fecha_vencimiento <= (cd.mes_corte + INTERVAL '5 years') THEN '5 Años'
-                    WHEN cd.fecha_vencimiento <= (cd.mes_corte + INTERVAL '6 years') THEN '6 Años'
-                    WHEN cd.fecha_vencimiento <= (cd.mes_corte + INTERVAL '7 years') THEN '7 Años'
+                    WHEN CEIL((cd.fecha_vencimiento - cd.fecha_corte) / 365.0) < 2 THEN '1 Año'
+                    WHEN CEIL((cd.fecha_vencimiento - cd.fecha_corte) / 365.0) < 3 THEN '2 Años'
+                    WHEN CEIL((cd.fecha_vencimiento - cd.fecha_corte) / 365.0) < 4 THEN '3 Años'
+                    WHEN CEIL((cd.fecha_vencimiento - cd.fecha_corte) / 365.0) < 5 THEN '4 Años'
+                    WHEN CEIL((cd.fecha_vencimiento - cd.fecha_corte) / 365.0) < 6 THEN '5 Años'
+                    WHEN CEIL((cd.fecha_vencimiento - cd.fecha_corte) / 365.0) < 7 THEN '6 Años'
+                    WHEN CEIL((cd.fecha_vencimiento - cd.fecha_corte) / 365.0) < 8 THEN '7 Años'
                     ELSE '8 Años'
                 END""";
 
@@ -261,8 +261,9 @@ public class GenerarSnapshotSeguimientoHandler {
                     ? saldoPlazo.divide(carteraTotalGlobal, 8, RoundingMode.HALF_UP).multiply(new BigDecimal("100"))
                             .setScale(4, RoundingMode.HALF_UP)
                     : BigDecimal.ZERO;
-            BigDecimal imorPlazo = saldoPlazo.compareTo(BigDecimal.ZERO) > 0
-                    ? cvPlazo.add(ivPlazo).divide(saldoPlazo, 8, RoundingMode.HALF_UP).multiply(new BigDecimal("100"))
+            BigDecimal imorPlazo = carteraTotalGlobal.compareTo(BigDecimal.ZERO) > 0
+                    ? cvPlazo.add(ivPlazo).divide(carteraTotalGlobal, 8, RoundingMode.HALF_UP)
+                            .multiply(new BigDecimal("100"))
                             .setScale(4, RoundingMode.HALF_UP)
                     : BigDecimal.ZERO;
 
@@ -303,8 +304,9 @@ public class GenerarSnapshotSeguimientoHandler {
                     ? saldoPlazo.divide(carteraTotalGlobal, 8, RoundingMode.HALF_UP).multiply(new BigDecimal("100"))
                             .setScale(4, RoundingMode.HALF_UP)
                     : BigDecimal.ZERO;
-            BigDecimal imorPlazo = saldoPlazo.compareTo(BigDecimal.ZERO) > 0
-                    ? cvPlazo.add(ivPlazo).divide(saldoPlazo, 8, RoundingMode.HALF_UP).multiply(new BigDecimal("100"))
+            BigDecimal imorPlazo = carteraTotalGlobal.compareTo(BigDecimal.ZERO) > 0
+                    ? cvPlazo.add(ivPlazo).divide(carteraTotalGlobal, 8, RoundingMode.HALF_UP)
+                            .multiply(new BigDecimal("100"))
                             .setScale(4, RoundingMode.HALF_UP)
                     : BigDecimal.ZERO;
 
