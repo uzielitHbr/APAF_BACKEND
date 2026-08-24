@@ -58,11 +58,6 @@ public class CrearLimiteRiesgoHandler {
 
         String claveNorm = normalizarClave(command.getClave());
 
-        Optional<RiesgoLimiteEntity> existing = limiteRepository.findByAgrupacionAndClave(agrupacion, claveNorm);
-        if (existing.isPresent()) {
-            throw new RiesgoExceptions.LimiteDuplicadoException("Clave duplicada en agrupacion");
-        }
-
         TipoLimite tipo;
         try {
             tipo = TipoLimite.valueOf(command.getTipoLimite().toUpperCase());
@@ -70,8 +65,24 @@ public class CrearLimiteRiesgoHandler {
             throw new RiesgoExceptions.ParametroInvalidoException("Tipo limite invalido");
         }
 
-        RiesgoLimiteEntity limite = new RiesgoLimiteEntity(agrupacion, claveNorm, command.getIdentificacion(), tipo, command.getLimiteEstablecidoPorcentaje());
-        limite = limiteRepository.save(limite);
+        Optional<RiesgoLimiteEntity> existing = limiteRepository.findByAgrupacionAndClave(agrupacion, claveNorm);
+        RiesgoLimiteEntity limite;
+        
+        if (existing.isPresent()) {
+            limite = existing.get();
+            // UPSERT: Si ya existe (como los estáticos precargados o ya creados con NULL), actualizamos
+            // Ojo: si ya tiene un porcentaje asignado, el front-end debería haber llamado a PUT (Actualizar), pero
+            // al nivel de BD y handler, si lo mandan a POST (Crear), también se considera válido sobreescribir
+            // (o podríamos lanzar error si porcentaje_actual != null, pero la regla dice "Actualiza el porcentaje_actual").
+            if (limite.getPorcentajeActual() != null && limite.getActivo()) {
+                throw new RiesgoExceptions.LimiteDuplicadoException("El límite ya se encuentra activo y configurado. Utilice la actualización.");
+            }
+            limite.updateLimite(tipo, command.getLimiteEstablecidoPorcentaje());
+            limite = limiteRepository.save(limite);
+        } else {
+            limite = new RiesgoLimiteEntity(agrupacion, claveNorm, command.getIdentificacion(), tipo, command.getLimiteEstablecidoPorcentaje());
+            limite = limiteRepository.save(limite);
+        }
 
         RiesgoLimiteHistorialEntity version = new RiesgoLimiteHistorialEntity(
                 limite, AccionLimite.CREACION, null, command.getLimiteEstablecidoPorcentaje(), "Creación de límite",

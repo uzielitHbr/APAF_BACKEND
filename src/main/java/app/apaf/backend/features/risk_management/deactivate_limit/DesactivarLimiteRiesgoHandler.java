@@ -36,19 +36,22 @@ public class DesactivarLimiteRiesgoHandler {
         try {
             RiesgoLimiteEntity limite = limiteRepository.findById(idLimite)
                     .orElseThrow(() -> new RiesgoExceptions.LimiteNoEncontradoException("Limite inexistente"));
+            
+            if (!limite.getActivo()) {
+                throw new RiesgoExceptions.LimiteInvalidoException("El límite ya se encuentra desactivado");
+            }
 
             java.math.BigDecimal anterior = limite.getPorcentajeActual();
             limite.desactivar();
             limiteRepository.save(limite);
 
             RiesgoLimiteHistorialEntity newVersion = new RiesgoLimiteHistorialEntity(
-                    limite, AccionLimite.DESACTIVACION, anterior, anterior, "Desactivación de límite",
+                    limite, AccionLimite.DESACTIVACION, anterior, anterior, command.getMotivo(),
                     realizadoPor, actorReal);
             historialRepository.save(newVersion);
 
             RiesgoLimiteActionResponse resp = new RiesgoLimiteActionResponse();
             resp.setIdLimite(limite.getIdLimite());
-            
             resp.setMensaje("Limite desactivado exitosamente");
             return resp;
         } catch (ObjectOptimisticLockingFailureException e) {
