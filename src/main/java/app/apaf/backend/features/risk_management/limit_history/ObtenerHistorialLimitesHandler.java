@@ -1,8 +1,8 @@
 package app.apaf.backend.features.risk_management.limit_history;
 
 import app.apaf.backend.features.risk_management.domain.AgrupacionRiesgo;
-import app.apaf.backend.features.risk_management.domain.entity.RiesgoLimiteVersionEntity;
-import app.apaf.backend.features.risk_management.domain.repository.RiesgoLimiteVersionRepository;
+import app.apaf.backend.features.risk_management.domain.entity.RiesgoLimiteHistorialEntity;
+import app.apaf.backend.features.risk_management.domain.repository.RiesgoLimiteHistorialRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -14,9 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ObtenerHistorialLimitesHandler {
-    private final RiesgoLimiteVersionRepository repository;
+    private final RiesgoLimiteHistorialRepository repository;
 
-    public ObtenerHistorialLimitesHandler(RiesgoLimiteVersionRepository repository) {
+    public ObtenerHistorialLimitesHandler(RiesgoLimiteHistorialRepository repository) {
         this.repository = repository;
     }
 
@@ -30,30 +30,30 @@ public class ObtenerHistorialLimitesHandler {
                     "Agrupacion invalida");
         }
 
-        PageRequest pr = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "fechaRegistro"));
-        Page<RiesgoLimiteVersionEntity> versionPage;
+        PageRequest pr = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "fechaMovimiento"));
+        Page<RiesgoLimiteHistorialEntity> versionPage;
 
         if (search != null && !search.trim().isEmpty()) {
-            versionPage = repository.findHistoryByAgrupacionAndSearch(agrupacion, search.trim(), pr);
+            versionPage = repository.findByAgrupacionAndSearch(agrupacion, search.trim(), pr);
         } else {
-            versionPage = repository.findHistoryByAgrupacion(agrupacion, pr);
+            versionPage = repository.findByAgrupacion(agrupacion, pr);
         }
 
         ObtenerHistorialLimitesResponse response = new ObtenerHistorialLimitesResponse();
 
         response.setDatos(versionPage.getContent().stream().map(v -> {
             ObtenerHistorialLimitesResponse.HistorialDto dto = new ObtenerHistorialLimitesResponse.HistorialDto();
-            dto.setIdVersion(v.getIdVersion());
+            dto.setIdVersion(v.getIdHistorial());
             dto.setIdLimite(v.getRiesgoLimite().getIdLimite());
             dto.setAccion(v.getAccion().name());
             dto.setAgrupacion(v.getRiesgoLimite().getAgrupacion().name().toLowerCase());
             dto.setClave(v.getRiesgoLimite().getClave());
             dto.setIdentificacion(v.getRiesgoLimite().getIdentificacion());
-            dto.setTipoLimite(v.getTipoLimite().name());
-            dto.setPorcentajeAnterior(v.getLimitePorcentaje());
-            dto.setNuevoPorcentaje(v.getLimitePorcentaje());
-            dto.setActivo(v.getActivo());
-            dto.setFechaModificacion(v.getFechaRegistro());
+            dto.setTipoLimite(v.getRiesgoLimite().getTipoLimite().name());
+            dto.setPorcentajeAnterior(v.getPorcentajeAnterior());
+            dto.setNuevoPorcentaje(v.getPorcentajeNuevo());
+            dto.setActivo(v.getRiesgoLimite().getActivo());
+            dto.setFechaModificacion(v.getFechaMovimiento());
 
             ObtenerHistorialLimitesResponse.ActorDto actor = new ObtenerHistorialLimitesResponse.ActorDto();
             actor.setIdUsuario(v.getRealizadoPor());

@@ -1,9 +1,9 @@
 package app.apaf.backend.features.risk_management.create_limit;
 
 import app.apaf.backend.features.risk_management.domain.entity.RiesgoLimiteEntity;
-import app.apaf.backend.features.risk_management.domain.entity.RiesgoLimiteVersionEntity;
+import app.apaf.backend.features.risk_management.domain.entity.RiesgoLimiteHistorialEntity;
 import app.apaf.backend.features.risk_management.domain.repository.RiesgoLimiteRepository;
-import app.apaf.backend.features.risk_management.domain.repository.RiesgoLimiteVersionRepository;
+import app.apaf.backend.features.risk_management.domain.repository.RiesgoLimiteHistorialRepository;
 import app.apaf.backend.features.risk_management.domain.exception.RiesgoExceptions;
 import app.apaf.backend.domain.users.repository.UserRepository;
 import app.apaf.backend.domain.users.User;
@@ -19,13 +19,13 @@ import app.apaf.backend.features.risk_management.domain.TipoLimite;
 @Service
 public class CrearLimiteRiesgoHandler {
     private final RiesgoLimiteRepository limiteRepository;
-    private final RiesgoLimiteVersionRepository versionRepository;
+    private final RiesgoLimiteHistorialRepository historialRepository;
     private final UserRepository userRepository;
 
     public CrearLimiteRiesgoHandler(RiesgoLimiteRepository limiteRepository,
-            RiesgoLimiteVersionRepository versionRepository, UserRepository userRepository) {
+            RiesgoLimiteHistorialRepository historialRepository, UserRepository userRepository) {
         this.limiteRepository = limiteRepository;
-        this.versionRepository = versionRepository;
+        this.historialRepository = historialRepository;
         this.userRepository = userRepository;
     }
 
@@ -39,7 +39,8 @@ public class CrearLimiteRiesgoHandler {
 
     @Transactional
     public RiesgoLimiteActionResponse handle(CrearLimiteRiesgoCommand command, String actor) {
-        User user = userRepository.findByEmail(actor).orElseThrow(() -> new RiesgoExceptions.DatosInconsistentesException(\"Usuario no encontrado\"));
+        User user = userRepository.findByEmail(actor)
+                .orElseThrow(() -> new RiesgoExceptions.DatosInconsistentesException("Usuario no encontrado"));
         Long realizadoPor = user.getIdUser();
         String actorReal = user.getFullName();
         if (command.getLimiteEstablecidoPorcentaje() == null
@@ -62,9 +63,6 @@ public class CrearLimiteRiesgoHandler {
             throw new RiesgoExceptions.LimiteDuplicadoException("Clave duplicada en agrupacion");
         }
 
-        RiesgoLimiteEntity limite = new RiesgoLimiteEntity(agrupacion, claveNorm, command.getIdentificacion());
-        limite = limiteRepository.save(limite);
-
         TipoLimite tipo;
         try {
             tipo = TipoLimite.valueOf(command.getTipoLimite().toUpperCase());
@@ -72,14 +70,17 @@ public class CrearLimiteRiesgoHandler {
             throw new RiesgoExceptions.ParametroInvalidoException("Tipo limite invalido");
         }
 
-        RiesgoLimiteVersionEntity version = new RiesgoLimiteVersionEntity(
-                limite, 1, tipo, command.getLimiteEstablecidoPorcentaje(), true, AccionLimite.CREACION,
-                realizadoPor, actorReal, \"USUARIO\");
-        versionRepository.save(version);
+        RiesgoLimiteEntity limite = new RiesgoLimiteEntity(agrupacion, claveNorm, command.getIdentificacion(), tipo, command.getLimiteEstablecidoPorcentaje());
+        limite = limiteRepository.save(limite);
+
+        RiesgoLimiteHistorialEntity version = new RiesgoLimiteHistorialEntity(
+                limite, AccionLimite.CREACION, null, command.getLimiteEstablecidoPorcentaje(), "Creación de límite",
+                realizadoPor, actorReal);
+        historialRepository.save(version);
 
         RiesgoLimiteActionResponse resp = new RiesgoLimiteActionResponse();
         resp.setIdLimite(limite.getIdLimite());
-        resp.setNumeroVersion(1);
+        
         resp.setMensaje("Limite creado exitosamente");
         return resp;
     }

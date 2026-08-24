@@ -2,7 +2,7 @@ package app.apaf.backend.features.risk_management.update_limit;
 
 import app.apaf.backend.features.risk_management.domain.*;
 import app.apaf.backend.features.risk_management.domain.repository.RiesgoLimiteRepository;
-import app.apaf.backend.features.risk_management.domain.repository.RiesgoLimiteVersionRepository;
+import app.apaf.backend.features.risk_management.domain.repository.RiesgoLimiteHistorialRepository;
 import app.apaf.backend.features.risk_management.domain.exception.RiesgoExceptions;
 import app.apaf.backend.domain.users.repository.UserRepository;
 import app.apaf.backend.domain.users.User;
@@ -13,18 +13,18 @@ import java.util.UUID;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import app.apaf.backend.features.risk_management.domain.entity.RiesgoLimiteEntity;
-import app.apaf.backend.features.risk_management.domain.entity.RiesgoLimiteVersionEntity;
+import app.apaf.backend.features.risk_management.domain.entity.RiesgoLimiteHistorialEntity;
 
 @Service
 public class ActualizarLimiteRiesgoHandler {
     private final RiesgoLimiteRepository limiteRepository;
-    private final RiesgoLimiteVersionRepository versionRepository;
+    private final RiesgoLimiteHistorialRepository historialRepository;
     private final UserRepository userRepository;
 
     public ActualizarLimiteRiesgoHandler(RiesgoLimiteRepository limiteRepository,
-            RiesgoLimiteVersionRepository versionRepository, UserRepository userRepository) {
+            RiesgoLimiteHistorialRepository historialRepository, UserRepository userRepository) {
         this.limiteRepository = limiteRepository;
-        this.versionRepository = versionRepository;
+        this.historialRepository = historialRepository;
         this.userRepository = userRepository;
     }
 
@@ -44,14 +44,7 @@ public class ActualizarLimiteRiesgoHandler {
             RiesgoLimiteEntity limite = limiteRepository.findById(idLimite)
                     .orElseThrow(() -> new RiesgoExceptions.LimiteNoEncontradoException("Limite inexistente"));
 
-            RiesgoLimiteVersionEntity actualVersion = versionRepository.findByRiesgoLimiteAndVigenteHastaIsNull(limite)
-                    .orElseThrow(() -> new RiesgoExceptions.DatosInconsistentesException("No hay version activa"));
-
-            actualVersion.closeVersion();
-            versionRepository.save(actualVersion);
-
-            limite.markUpdated();
-            limiteRepository.save(limite);
+            
 
             TipoLimite tipo;
             try {
@@ -60,17 +53,18 @@ public class ActualizarLimiteRiesgoHandler {
                 throw new RiesgoExceptions.ParametroInvalidoException("Tipo limite invalido");
             }
 
-            Integer newVersionNum = actualVersion.getNumeroVersion() + 1;
+            java.math.BigDecimal anterior = limite.getPorcentajeActual();
+            limite.updateLimite(tipo, command.getLimiteEstablecidoPorcentaje());
+            limiteRepository.save(limite);
 
-            RiesgoLimiteVersionEntity newVersion = new RiesgoLimiteVersionEntity(
-                    limite, newVersionNum, tipo, command.getLimiteEstablecidoPorcentaje(), true,
-                    AccionLimite.ACTUALIZACION,
-                    realizadoPor, actorReal, "USUARIO");
-            versionRepository.save(newVersion);
+            RiesgoLimiteHistorialEntity newVersion = new RiesgoLimiteHistorialEntity(
+                    limite, AccionLimite.ACTUALIZACION, anterior, command.getLimiteEstablecidoPorcentaje(), "Actualización de límite",
+                    realizadoPor, actorReal);
+            historialRepository.save(newVersion);
 
             RiesgoLimiteActionResponse resp = new RiesgoLimiteActionResponse();
             resp.setIdLimite(limite.getIdLimite());
-            resp.setNumeroVersion(newVersionNum);
+            
             resp.setMensaje("Limite actualizado exitosamente");
             return resp;
         } catch (ObjectOptimisticLockingFailureException e) {

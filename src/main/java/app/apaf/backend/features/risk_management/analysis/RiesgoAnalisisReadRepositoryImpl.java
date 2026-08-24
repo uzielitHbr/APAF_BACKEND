@@ -49,28 +49,24 @@ public class RiesgoAnalisisReadRepositoryImpl implements RiesgoAnalisisReadCusto
                 SUM(v.cartera_vigente) as "carteraVigente",
                 SUM(v.cartera_vencida) as "carteraVencida",
                 SUM(v.cartera_total) as "carteraTotal",
-                COALESCE(rlv.tipo_limite, rlo_v.tipo_limite) as "tipoLimite",
-                COALESCE(rlv.limite_porcentaje, rlo_v.limite_porcentaje) as "limiteEstablecidoPorcentaje"
+                COALESCE(rl.tipo_limite, rlo.tipo_limite) as "tipoLimite",
+                COALESCE(rl.porcentaje_actual, rlo.porcentaje_actual) as "limiteEstablecidoPorcentaje"
             FROM view_riesgo_cartera_mensual v
-            LEFT JOIN riesgo_limite rl ON rl.agrupacion = ? AND rl.clave = %s
-            LEFT JOIN riesgo_limite_version rlv ON rlv.id_limite = rl.id_limite
-                AND rlv.vigente_desde <= v.fecha_corte AND (rlv.vigente_hasta IS NULL OR rlv.vigente_hasta > v.fecha_corte)
-            LEFT JOIN riesgo_limite rlo ON rlo.agrupacion = ? AND rlo.clave = 'OTROS' AND rl.id_limite IS NULL
-            LEFT JOIN riesgo_limite_version rlo_v ON rlo_v.id_limite = rlo.id_limite
-                AND rlo_v.vigente_desde <= v.fecha_corte AND (rlo_v.vigente_hasta IS NULL OR rlo_v.vigente_hasta > v.fecha_corte)
+            LEFT JOIN riesgo_limite rl ON rl.agrupacion = ? AND rl.clave = %s AND rl.activo = true
+            LEFT JOIN riesgo_limite rlo ON rlo.agrupacion = ? AND rlo.clave = 'OTROS' AND rl.id_limite IS NULL AND rlo.activo = true
             WHERE v.mes_corte = ?
             GROUP BY
                 COALESCE(rl.id_limite, rlo.id_limite),
                 COALESCE(rl.clave, 'OTROS'),
                 COALESCE(rl.identificacion, 'Otros'),
-                COALESCE(rlv.tipo_limite, rlo_v.tipo_limite),
-                COALESCE(rlv.limite_porcentaje, rlo_v.limite_porcentaje)
+                COALESCE(rl.tipo_limite, rlo.tipo_limite),
+                COALESCE(rl.porcentaje_actual, rlo.porcentaje_actual)
         """.formatted(columnClave);
 
         String countQuery = """
             SELECT COUNT(DISTINCT COALESCE(rl.clave, 'OTROS'))
             FROM view_riesgo_cartera_mensual v
-            LEFT JOIN riesgo_limite rl ON rl.agrupacion = ? AND rl.clave = %s
+            LEFT JOIN riesgo_limite rl ON rl.agrupacion = ? AND rl.clave = %s AND rl.activo = true
             WHERE v.mes_corte = ?
         """.formatted(columnClave);
 
@@ -78,7 +74,11 @@ public class RiesgoAnalisisReadRepositoryImpl implements RiesgoAnalisisReadCusto
         if (pageable.getSort().isSorted()) {
             sortClause = " ORDER BY " + pageable.getSort().toString().replace(":", "");
         }
-        String pagedQuery = baseQuery + sortClause + " LIMIT " + pageable.getPageSize() + " OFFSET " + pageable.getOffset();
+        
+        String pagedQuery = baseQuery;
+        if (pageable.isPaged()) {
+            pagedQuery += sortClause + " LIMIT " + pageable.getPageSize() + " OFFSET " + pageable.getOffset();
+        }
 
         List<RiesgoSegmentoProjection> content = jdbcTemplate.query(
             pagedQuery,
@@ -105,37 +105,122 @@ public class RiesgoAnalisisReadRepositoryImpl implements RiesgoAnalisisReadCusto
         return new PageImpl<>(content, pageable, total != null ? total : 0);
     }
 
+    
     @Override
     public List<OpcionLimiteDto> obtenerOpcionesDisponiblesPorAgrupacion(AgrupacionRiesgo agrupacion) {
+        List<OpcionLimiteDto> opcionesEstaticas = null;
+
+        switch (agrupacion) {
+            case EDAD -> {
+                opcionesEstaticas = List.of(
+                    new OpcionLimiteDto("1", "18 A 25"),
+                    new OpcionLimiteDto("2", "26 A 30"),
+                    new OpcionLimiteDto("3", "31 A 35"),
+                    new OpcionLimiteDto("4", "36 A 40"),
+                    new OpcionLimiteDto("5", "41 A 45"),
+                    new OpcionLimiteDto("6", "46 A 50"),
+                    new OpcionLimiteDto("7", "51 A 55"),
+                    new OpcionLimiteDto("8", "56 A 60"),
+                    new OpcionLimiteDto("9", "61 A 65"),
+                    new OpcionLimiteDto("10", "66 A 70"),
+                    new OpcionLimiteDto("11", "71 A 75"),
+                    new OpcionLimiteDto("12", "76 A 80"),
+                    new OpcionLimiteDto("13", "81 A 85"),
+                    new OpcionLimiteDto("14", "86 A 90")
+                );
+            }
+            case GENERO -> {
+                opcionesEstaticas = List.of(
+                    new OpcionLimiteDto("MASCULINO", "Masculino"),
+                    new OpcionLimiteDto("FEMENINO", "Femenino")
+                );
+            }
+            case TIPO_CLASIFICACION -> {
+                opcionesEstaticas = List.of(
+                    new OpcionLimiteDto("NUEVO", "Nuevo"),
+                    new OpcionLimiteDto("RENOVADO", "Renovado"),
+                    new OpcionLimiteDto("REESTRUCTURADO", "Reestructurado")
+                );
+            }
+            case MODALIDAD -> {
+                opcionesEstaticas = List.of(
+                    new OpcionLimiteDto("PAGOS PERIODICOS DE PRINCIPAL E INTERES", "Pagos periodicos de principal e interes"),
+                    new OpcionLimiteDto("PAGO UNICO DE PRINCIPAL E INTERES AL VENCIMIENTO", "Pago unico de principal e interes al vencimiento")
+                );
+            }
+            case PRODUCTO -> {
+                opcionesEstaticas = List.of(
+                    new OpcionLimiteDto("3101", "Credito Ordinario"),
+                    new OpcionLimiteDto("3102", "Credito Automatico"),
+                    new OpcionLimiteDto("3103", "Auto-credito"),
+                    new OpcionLimiteDto("3104", "Credi Hogar"),
+                    new OpcionLimiteDto("3105", "Creditazo"),
+                    new OpcionLimiteDto("3107", "Vivienda segura"),
+                    new OpcionLimiteDto("3109", "Credito Premier"),
+                    new OpcionLimiteDto("3110", "Credito de Confianza"),
+                    new OpcionLimiteDto("3129", "Semilla"),
+                    new OpcionLimiteDto("3130", "Credito Agropecuario"),
+                    new OpcionLimiteDto("3134", "Multi-Credito")
+                );
+            }
+            default -> {
+                // Dinámicos
+            }
+        }
+
+        if (opcionesEstaticas != null) {
+            List<OpcionLimiteDto> estaticasConOtros = new java.util.ArrayList<>(opcionesEstaticas);
+            estaticasConOtros.add(new OpcionLimiteDto("OTROS", "Otros"));
+            
+            List<String> clavesOcupadas = jdbcTemplate.query(
+                "SELECT clave FROM riesgo_limite WHERE agrupacion = ? AND activo = true",
+                (rs, rowNum) -> rs.getString("clave"),
+                agrupacion.name()
+            );
+            return estaticasConOtros.stream()
+                    .filter(opt -> !clavesOcupadas.contains(opt.getClave()))
+                    .toList();
+        }
+
+        // Catálogos dinámicos
         String columnClave;
         String columnIdentificacion;
 
         switch (agrupacion) {
-            case PRODUCTO -> { columnClave = "CAST(v.numero_producto AS VARCHAR)"; columnIdentificacion = "CAST(v.producto_credito AS VARCHAR)"; }
             case MUNICIPIO -> { columnClave = "UPPER(v.municipio)"; columnIdentificacion = "CAST(v.municipio AS VARCHAR)"; }
             case ESTADO -> { columnClave = "UPPER(v.estado)"; columnIdentificacion = "CAST(v.estado AS VARCHAR)"; }
             case OCUPACION -> { columnClave = "UPPER(v.ocupacion_agrupada)"; columnIdentificacion = "CAST(v.ocupacion_agrupada AS VARCHAR)"; }
-            case EDAD -> { columnClave = "CAST(v.intervalo_edad AS VARCHAR)"; columnIdentificacion = "CAST(v.intervalo_edad AS VARCHAR)"; }
-            case GENERO -> { columnClave = "UPPER(v.genero)"; columnIdentificacion = "CAST(v.genero AS VARCHAR)"; }
             case SUCURSAL -> { columnClave = "UPPER(v.sucursal)"; columnIdentificacion = "CAST(v.sucursal AS VARCHAR)"; }
             case ACREDITADO -> { columnClave = "UPPER(v.cargo_acreditado_parte_relacionada)"; columnIdentificacion = "CAST(v.cargo_acreditado_parte_relacionada AS VARCHAR)"; }
-            case MODALIDAD -> { columnClave = "UPPER(v.modalidad_pago)"; columnIdentificacion = "CAST(v.modalidad_pago AS VARCHAR)"; }
-            case TIPO_CLASIFICACION -> { columnClave = "UPPER(v.renovado_reestructurado_normal)"; columnIdentificacion = "CAST(v.renovado_reestructurado_normal AS VARCHAR)"; }
-            default -> throw new IllegalArgumentException("Agrupacion invalida");
+            default -> throw new IllegalArgumentException("Agrupacion invalida para catalogo dinamico");
         }
 
         String sql = """
             SELECT DISTINCT %s as clave, %s as identificacion
             FROM view_riesgo_cartera_mensual v
-            WHERE v.mes_corte = (SELECT MAX(mes_corte) FROM view_riesgo_cartera_mensual)
-            AND %s NOT IN (SELECT clave FROM riesgo_limite WHERE agrupacion = ?)
-        """.formatted(columnClave, columnIdentificacion, columnClave);
+            WHERE %s IS NOT NULL AND BTRIM(%s) <> ''
+        """.formatted(columnClave, columnIdentificacion, columnClave, columnClave);
 
-        return jdbcTemplate.query(
+        List<OpcionLimiteDto> dinamicas = jdbcTemplate.query(
             sql,
-            (rs, rowNum) -> new OpcionLimiteDto(rs.getString("clave"), rs.getString("identificacion")),
+            (rs, rowNum) -> new OpcionLimiteDto(rs.getString("clave"), rs.getString("identificacion"))
+        );
+        
+        // Ensure "OTROS" is available for dynamic catalogs if they want to limit the catch-all bucket
+        boolean hasOtros = dinamicas.stream().anyMatch(opt -> "OTROS".equals(opt.getClave()));
+        if (!hasOtros) {
+            dinamicas.add(new OpcionLimiteDto("OTROS", "Otros"));
+        }
+
+        List<String> clavesOcupadas = jdbcTemplate.query(
+            "SELECT clave FROM riesgo_limite WHERE agrupacion = ? AND activo = true",
+            (rs, rowNum) -> rs.getString("clave"),
             agrupacion.name()
         );
+
+        return dinamicas.stream()
+                .filter(opt -> !clavesOcupadas.contains(opt.getClave()))
+                .toList();
     }
 
     private static class RiesgoSegmentoProjectionImpl implements RiesgoSegmentoProjection {

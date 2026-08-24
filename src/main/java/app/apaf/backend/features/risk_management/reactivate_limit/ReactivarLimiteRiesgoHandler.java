@@ -3,7 +3,7 @@ package app.apaf.backend.features.risk_management.reactivate_limit;
 import app.apaf.backend.features.risk_management.domain.*;
 import app.apaf.backend.features.risk_management.domain.entity.*;
 import app.apaf.backend.features.risk_management.domain.repository.RiesgoLimiteRepository;
-import app.apaf.backend.features.risk_management.domain.repository.RiesgoLimiteVersionRepository;
+import app.apaf.backend.features.risk_management.domain.repository.RiesgoLimiteHistorialRepository;
 import app.apaf.backend.features.risk_management.domain.exception.RiesgoExceptions;
 import app.apaf.backend.domain.users.repository.UserRepository;
 import app.apaf.backend.domain.users.User;
@@ -16,13 +16,13 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 @Service
 public class ReactivarLimiteRiesgoHandler {
     private final RiesgoLimiteRepository limiteRepository;
-    private final RiesgoLimiteVersionRepository versionRepository;
+    private final RiesgoLimiteHistorialRepository historialRepository;
     private final UserRepository userRepository;
 
     public ReactivarLimiteRiesgoHandler(RiesgoLimiteRepository limiteRepository,
-            RiesgoLimiteVersionRepository versionRepository, UserRepository userRepository) {
+            RiesgoLimiteHistorialRepository historialRepository, UserRepository userRepository) {
         this.limiteRepository = limiteRepository;
-        this.versionRepository = versionRepository;
+        this.historialRepository = historialRepository;
         this.userRepository = userRepository;
     }
 
@@ -42,15 +42,8 @@ public class ReactivarLimiteRiesgoHandler {
             RiesgoLimiteEntity limite = limiteRepository.findById(idLimite)
                     .orElseThrow(() -> new RiesgoExceptions.LimiteNoEncontradoException("Limite inexistente"));
 
-            RiesgoLimiteVersionEntity actualVersion = versionRepository.findByRiesgoLimiteAndVigenteHastaIsNull(limite)
-                    .orElseThrow(() -> new RiesgoExceptions.DatosInconsistentesException("No hay version activa"));
-
-            actualVersion.closeVersion();
-            versionRepository.save(actualVersion);
-
-            limite.markUpdated();
-            limiteRepository.save(limite);
-
+            java.math.BigDecimal anterior = limite.getPorcentajeActual();
+            limite.reactivar();
             TipoLimite tipo;
             try {
                 tipo = TipoLimite.valueOf(command.getTipoLimite().toUpperCase());
@@ -58,17 +51,17 @@ public class ReactivarLimiteRiesgoHandler {
                 throw new RiesgoExceptions.ParametroInvalidoException("Tipo limite invalido");
             }
 
-            Integer newVersionNum = actualVersion.getNumeroVersion() + 1;
+            limite.updateLimite(tipo, command.getLimiteEstablecidoPorcentaje());
+            limiteRepository.save(limite);
 
-            RiesgoLimiteVersionEntity newVersion = new RiesgoLimiteVersionEntity(
-                    limite, newVersionNum, tipo, command.getLimiteEstablecidoPorcentaje(), true,
-                    AccionLimite.REACTIVACION,
-                    realizadoPor, actorReal, "USUARIO");
-            versionRepository.save(newVersion);
+            RiesgoLimiteHistorialEntity newVersion = new RiesgoLimiteHistorialEntity(
+                    limite, AccionLimite.REACTIVACION, anterior, command.getLimiteEstablecidoPorcentaje(), "Reactivación de límite",
+                    realizadoPor, actorReal);
+            historialRepository.save(newVersion);
 
             RiesgoLimiteActionResponse resp = new RiesgoLimiteActionResponse();
             resp.setIdLimite(limite.getIdLimite());
-            resp.setNumeroVersion(newVersionNum);
+            
             resp.setMensaje("Limite reactivado exitosamente");
             return resp;
         } catch (ObjectOptimisticLockingFailureException e) {

@@ -22,8 +22,7 @@ public class OpcionesLimiteHandler {
             throw new RiesgoExceptions.ParametroInvalidoException("Agrupación inválida");
         }
 
-        List<OpcionLimiteDto> opciones = readRepository.obtenerOpcionesDisponiblesPorAgrupacion(agrupacion);
-        opciones.add(new OpcionLimiteDto("OTROS", "Otros"));
+        List<OpcionLimiteDto> opciones = new java.util.ArrayList<>(readRepository.obtenerOpcionesDisponiblesPorAgrupacion(agrupacion));
         
         return opciones;
     }

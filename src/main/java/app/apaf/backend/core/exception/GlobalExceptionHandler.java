@@ -15,11 +15,11 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 /**
-
- Global exception interceptor
-
-  @Author Uziel Abraham
-  @version 1.0
+ * 
+ * Global exception interceptor
+ * 
+ * @Author Uziel Abraham
+ * @version 1.0
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -36,7 +36,8 @@ public class GlobalExceptionHandler {
 
         String parameter = ex.getName();
         String valorIncorrect = ex.getValue() != null ? ex.getValue().toString() : "null";
-        String format = String.format("El valor '%s' no es válido para el parámetro '%s'. Verifique los valores permitidos.",
+        String format = String.format(
+                "El valor '%s' no es válido para el parámetro '%s'. Verifique los valores permitidos.",
                 valorIncorrect, parameter);
 
         response.put("message", format);
@@ -74,13 +75,15 @@ public class GlobalExceptionHandler {
         response.put("timestamp", LocalDateTime.now());
         response.put("status", HttpStatus.BAD_REQUEST.value());
         response.put("error", "JSON Mal Formado");
-        response.put("message", "El cuerpo de la petición (JSON) tiene un error de sintaxis o un tipo de dato incompatible.");
+        response.put("message",
+                "El cuerpo de la petición (JSON) tiene un error de sintaxis o un tipo de dato incompatible.");
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     @ExceptionHandler(app.apaf.backend.domain.cartera.exception.CarteraPeriodoInvalidoException.class)
-    public ResponseEntity<Map<String, Object>> handleCarteraPeriodoInvalidoException(app.apaf.backend.domain.cartera.exception.CarteraPeriodoInvalidoException ex) {
+    public ResponseEntity<Map<String, Object>> handleCarteraPeriodoInvalidoException(
+            app.apaf.backend.domain.cartera.exception.CarteraPeriodoInvalidoException ex) {
         Map<String, Object> response = new HashMap<>();
         response.put("timestamp", LocalDateTime.now());
         response.put("status", HttpStatus.BAD_REQUEST.value());
@@ -90,7 +93,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(app.apaf.backend.domain.cartera.exception.CarteraPeriodoNoEncontradoException.class)
-    public ResponseEntity<Map<String, Object>> handleCarteraPeriodoNoEncontradoException(app.apaf.backend.domain.cartera.exception.CarteraPeriodoNoEncontradoException ex) {
+    public ResponseEntity<Map<String, Object>> handleCarteraPeriodoNoEncontradoException(
+            app.apaf.backend.domain.cartera.exception.CarteraPeriodoNoEncontradoException ex) {
         Map<String, Object> response = new HashMap<>();
         response.put("timestamp", LocalDateTime.now());
         response.put("status", HttpStatus.NOT_FOUND.value());
@@ -100,7 +104,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(app.apaf.backend.domain.cartera.exception.CarteraTotalesInconsistentesException.class)
-    public ResponseEntity<Map<String, Object>> handleCarteraTotalesInconsistentesException(app.apaf.backend.domain.cartera.exception.CarteraTotalesInconsistentesException ex) {
+    public ResponseEntity<Map<String, Object>> handleCarteraTotalesInconsistentesException(
+            app.apaf.backend.domain.cartera.exception.CarteraTotalesInconsistentesException ex) {
         Map<String, Object> response = new HashMap<>();
         response.put("timestamp", LocalDateTime.now());
         response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
@@ -124,7 +129,7 @@ public class GlobalExceptionHandler {
     }
 
     // Error 404
-    @ExceptionHandler({NoResourceFoundException.class, NoSuchElementException.class})
+    @ExceptionHandler({ NoResourceFoundException.class, NoSuchElementException.class })
     public ResponseEntity<Map<String, Object>> handleNotFoundExceptions(Exception ex) {
 
         Map<String, Object> response = new HashMap<>();
@@ -141,12 +146,13 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
+
     @ExceptionHandler({
-        app.apaf.backend.features.cartera_management.importacionhistorica.exception.FormatoCsvInvalidoException.class,
-        app.apaf.backend.features.cartera_management.importacionhistorica.exception.CampoCsvInvalidoException.class,
-        app.apaf.backend.features.cartera_management.importacionhistorica.exception.ContratoDuplicadoEnArchivoException.class,
-        app.apaf.backend.features.cartera_management.importacionhistorica.exception.PeriodoCarteraYaImportadoException.class,
-        app.apaf.backend.features.cartera_management.importacionhistorica.exception.IncongruenciaFechaArchivoException.class
+            app.apaf.backend.features.cartera_management.importacionhistorica.exception.FormatoCsvInvalidoException.class,
+            app.apaf.backend.features.cartera_management.importacionhistorica.exception.CampoCsvInvalidoException.class,
+            app.apaf.backend.features.cartera_management.importacionhistorica.exception.ContratoDuplicadoEnArchivoException.class,
+            app.apaf.backend.features.cartera_management.importacionhistorica.exception.PeriodoCarteraYaImportadoException.class,
+            app.apaf.backend.features.cartera_management.importacionhistorica.exception.IncongruenciaFechaArchivoException.class
     })
     public ResponseEntity<Map<String, Object>> handleImportacionCarteraExceptions(RuntimeException ex) {
         Map<String, Object> response = new HashMap<>();
@@ -154,7 +160,7 @@ public class GlobalExceptionHandler {
         response.put("status", HttpStatus.BAD_REQUEST.value());
         response.put("error", "Error en Importación de Cartera");
         response.put("message", ex.getMessage());
-        
+
         // Extraer detalles si el mensaje los contiene para facilitar al frontend
         // Ej: "Error en línea 15, campo emproblemado: ..."
         String msg = ex.getMessage();
@@ -168,8 +174,18 @@ public class GlobalExceptionHandler {
                 // Si falla el parseo, solo devolvemos el mensaje general
             }
         }
-        
+
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(org.springframework.web.bind.MissingServletRequestParameterException.class)
+    public ResponseEntity<Map<String, Object>> handleMissingParams(
+            org.springframework.web.bind.MissingServletRequestParameterException ex) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("error", "Parámetro faltante");
+        response.put("message", "Falta el parámetro requerido: " + ex.getParameterName());
+        response.put("status", 400);
+        return ResponseEntity.badRequest().body(response);
     }
 
     // Error 500
