@@ -1,13 +1,15 @@
 package app.apaf.backend.features.risk_management.domain.entity;
 
+import app.apaf.backend.features.risk_management.domain.AgrupacionRiesgo;
+import app.apaf.backend.features.risk_management.domain.TipoLimite;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.AccessLevel;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
-import app.apaf.backend.features.risk_management.domain.AgrupacionRiesgo;
 
 @Entity
 @Table(name = "riesgo_limite")
@@ -17,38 +19,71 @@ public class RiesgoLimiteEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id_limite", updatable = false, nullable = false)
+    @Column(name = "id_limite")
     private UUID idLimite;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "agrupacion", nullable = false, length = 40)
+    @Column(name = "agrupacion")
     private AgrupacionRiesgo agrupacion;
 
-    @Column(name = "clave", nullable = false, length = 160)
+    @Column(name = "clave")
     private String clave;
 
-    @Column(name = "identificacion", nullable = false, length = 255)
+    @Column(name = "identificacion")
     private String identificacion;
 
-    @Column(name = "fecha_creacion", nullable = false, updatable = false)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_limite")
+    private TipoLimite tipoLimite;
+
+    @Column(name = "porcentaje_actual")
+    private BigDecimal porcentajeActual;
+
+    @Column(name = "activo")
+    private Boolean activo;
+
+    @Column(name = "fecha_creacion", updatable = false)
     private LocalDateTime fechaCreacion;
 
-    @Column(name = "fecha_actualizacion", nullable = false)
+    @Column(name = "fecha_actualizacion")
     private LocalDateTime fechaActualizacion;
 
     @Version
-    @Column(name = "version_lock", nullable = false)
+    @Column(name = "version_lock")
     private Long versionLock;
 
-    public RiesgoLimiteEntity(AgrupacionRiesgo agrupacion, String clave, String identificacion) {
+    public RiesgoLimiteEntity(AgrupacionRiesgo agrupacion, String clave, String identificacion, TipoLimite tipoLimite, BigDecimal porcentajeActual) {
         this.agrupacion = agrupacion;
         this.clave = clave;
         this.identificacion = identificacion;
-        this.fechaCreacion = LocalDateTime.now();
-        this.fechaActualizacion = LocalDateTime.now();
+        this.tipoLimite = tipoLimite;
+        this.porcentajeActual = porcentajeActual;
+        this.activo = true;
     }
 
-    public void markUpdated() {
-        this.fechaActualizacion = LocalDateTime.now();
+    public void updateLimite(TipoLimite tipoLimite, BigDecimal nuevoPorcentaje) {
+        this.tipoLimite = tipoLimite;
+        this.porcentajeActual = nuevoPorcentaje;
+        this.activo = true;
+    }
+    
+    public void desactivar() {
+        this.activo = false;
+    }
+
+    public void reactivar() {
+        this.activo = true;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        fechaCreacion = LocalDateTime.now();
+        fechaActualizacion = LocalDateTime.now();
+        versionLock = 0L;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        fechaActualizacion = LocalDateTime.now();
     }
 }

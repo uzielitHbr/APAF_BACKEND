@@ -1,10 +1,12 @@
 package app.apaf.backend.features.risk_management.create_limit;
 
 import app.apaf.backend.features.risk_management.domain.entity.RiesgoLimiteEntity;
-import app.apaf.backend.features.risk_management.domain.entity.RiesgoLimiteVersionEntity;
+import app.apaf.backend.features.risk_management.domain.entity.RiesgoLimiteHistorialEntity;
 import app.apaf.backend.features.risk_management.domain.repository.RiesgoLimiteRepository;
-import app.apaf.backend.features.risk_management.domain.repository.RiesgoLimiteVersionRepository;
+import app.apaf.backend.features.risk_management.domain.repository.RiesgoLimiteHistorialRepository;
 import app.apaf.backend.features.risk_management.domain.exception.RiesgoExceptions;
+import app.apaf.backend.domain.users.repository.UserRepository;
+import app.apaf.backend.domain.users.User;
 import app.apaf.backend.features.risk_management.shared.RiesgoLimiteActionResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,12 +19,14 @@ import app.apaf.backend.features.risk_management.domain.TipoLimite;
 @Service
 public class CrearLimiteRiesgoHandler {
     private final RiesgoLimiteRepository limiteRepository;
-    private final RiesgoLimiteVersionRepository versionRepository;
+    private final RiesgoLimiteHistorialRepository historialRepository;
+    private final UserRepository userRepository;
 
     public CrearLimiteRiesgoHandler(RiesgoLimiteRepository limiteRepository,
-            RiesgoLimiteVersionRepository versionRepository) {
+            RiesgoLimiteHistorialRepository historialRepository, UserRepository userRepository) {
         this.limiteRepository = limiteRepository;
-        this.versionRepository = versionRepository;
+        this.historialRepository = historialRepository;
+        this.userRepository = userRepository;
     }
 
     private String normalizarClave(String clave) {
@@ -35,6 +39,10 @@ public class CrearLimiteRiesgoHandler {
 
     @Transactional
     public RiesgoLimiteActionResponse handle(CrearLimiteRiesgoCommand command, String actor) {
+        User user = userRepository.findByEmail(actor)
+                .orElseThrow(() -> new RiesgoExceptions.DatosInconsistentesException("Usuario no encontrado"));
+        Long realizadoPor = user.getIdUser();
+        String actorReal = user.getFullName();
         if (command.getLimiteEstablecidoPorcentaje() == null
                 || command.getLimiteEstablecidoPorcentaje().compareTo(java.math.BigDecimal.ZERO) < 0
                 || command.getLimiteEstablecidoPorcentaje().compareTo(new java.math.BigDecimal("100")) > 0) {
@@ -55,9 +63,6 @@ public class CrearLimiteRiesgoHandler {
             throw new RiesgoExceptions.LimiteDuplicadoException("Clave duplicada en agrupacion");
         }
 
-        RiesgoLimiteEntity limite = new RiesgoLimiteEntity(agrupacion, claveNorm, command.getIdentificacion());
-        limite = limiteRepository.save(limite);
-
         TipoLimite tipo;
         try {
             tipo = TipoLimite.valueOf(command.getTipoLimite().toUpperCase());
@@ -65,14 +70,17 @@ public class CrearLimiteRiesgoHandler {
             throw new RiesgoExceptions.ParametroInvalidoException("Tipo limite invalido");
         }
 
-        RiesgoLimiteVersionEntity version = new RiesgoLimiteVersionEntity(
-                limite, 1, tipo, command.getLimiteEstablecidoPorcentaje(), true, AccionLimite.CREACION,
-                null, actor, "USUARIO");
-        versionRepository.save(version);
+        RiesgoLimiteEntity limite = new RiesgoLimiteEntity(agrupacion, claveNorm, command.getIdentificacion(), tipo, command.getLimiteEstablecidoPorcentaje());
+        limite = limiteRepository.save(limite);
+
+        RiesgoLimiteHistorialEntity version = new RiesgoLimiteHistorialEntity(
+                limite, AccionLimite.CREACION, null, command.getLimiteEstablecidoPorcentaje(), "Creación de límite",
+                realizadoPor, actorReal);
+        historialRepository.save(version);
 
         RiesgoLimiteActionResponse resp = new RiesgoLimiteActionResponse();
         resp.setIdLimite(limite.getIdLimite());
-        resp.setNumeroVersion(1);
+        
         resp.setMensaje("Limite creado exitosamente");
         return resp;
     }

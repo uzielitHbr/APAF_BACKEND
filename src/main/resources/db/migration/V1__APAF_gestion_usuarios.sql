@@ -95,7 +95,7 @@ fecha_ultimo_pago_intereses DATE,
 monto_ultimo_pago_intereses NUMERIC(18, 2) NOT NULL DEFAULT 0.00,
 
 renovado_reestructurado_normal VARCHAR(50),
-emproblemado BOOLEAN NOT NULL DEFAULT FALSE,
+emproblemado VARCHAR(20),
 vigente_o_vencido VARCHAR(50),
 cargo_acreditado_parte_relacionada VARCHAR(100),
 
@@ -141,7 +141,12 @@ CONSTRAINT chk_cartera_edad
                                        ),
 
 CONSTRAINT chk_cartera_plazo_credito
-    CHECK ( plazo_credito_meses IS NULL OR plazo_credito_meses >= 0 )
+    CHECK ( plazo_credito_meses IS NULL OR plazo_credito_meses >= 0 ),
+
+    CONSTRAINT chk_emproblemado
+    CHECK (emproblemado IN ('0', '1','Emproblemado'))
+
+    
 );
 
 /*

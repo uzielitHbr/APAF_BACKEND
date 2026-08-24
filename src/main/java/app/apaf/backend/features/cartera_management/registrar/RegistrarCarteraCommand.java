@@ -35,7 +35,7 @@ public record RegistrarCarteraCommand(
     LocalDate fechaUltimoPagoIntereses,
     @NotNull @PositiveOrZero BigDecimal montoUltimoPagoIntereses,
     String renovadoReestructuradoNormal,
-    @NotNull Boolean emproblemado,
+    @NotBlank String emproblemado,
     String vigenteOVencido,
     String cargoAcreditadoParteRelacionada,
     @NotNull @PositiveOrZero BigDecimal montoGarantiaLiquida,

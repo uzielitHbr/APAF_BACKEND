@@ -26,12 +26,13 @@ public class ObtenerCarteraBaseHandler {
         public List<CarteraBaseResponse> carteraHanlder(String numeroSocio, String mesCorteStr) {
                 YearMonth periodo = YearMonth.parse(mesCorteStr, DateTimeFormatter.ofPattern("yyyy-MM"));
                 LocalDate mesCorte = periodo.atDay(1);
-                
+
                 List<CarteraDatos> datos = repository.findByNumeroSocioAndMesCorte(numeroSocio, mesCorte);
-                
+
                 if (datos.isEmpty()) {
                         throw new CarteraNoEncontradaException(
-                                        "Expediente base no encontrado para el socio: " + numeroSocio + " en el mes: " + mesCorteStr);
+                                        "Expediente base no encontrado para el socio: " + numeroSocio + " en el mes: "
+                                                        + mesCorteStr);
                 }
 
                 return datos.stream().map(this::mapear).collect(Collectors.toList());

@@ -49,7 +49,7 @@ public class CarteraCalculoEventListener {
                 .collect(Collectors.toList());
 
         calculadosRepository.saveAll(calculados);
-        
+
         log.info("Cálculos completados para el periodo {}", event.getPeriodo());
     }
 }
